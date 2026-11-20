@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Steiner wiki: Steiner trees and maximal distance minimizers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f5f8; --paper:#ffffff; --ink:#16202e; --mute:#5b6776; --line:#d6dce4;
+  --net:#1f4fd8; --ct:#0b8a72; --ct-bg:#e8f6f2; --open:#b02a77; --open-bg:#fbeef5;
+  --warn:#a45a00; --soft:#eef1f5;
+  --serif:"PT Serif",Georgia,"Times New Roman",serif;
+  --sans:"PT Sans","Segoe UI",Roboto,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#10151c; --paper:#171d26; --ink:#e6ebf2; --mute:#9aa7b6; --line:#2d3745;
+    --net:#86a8ff; --ct:#46c9ae; --ct-bg:#122f2a; --open:#f08cc0; --open-bg:#32182a;
+    --warn:#e3a34a; --soft:#1e2631;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#10151c; --paper:#171d26; --ink:#e6ebf2; --mute:#9aa7b6; --line:#2d3745;
+  --net:#86a8ff; --ct:#46c9ae; --ct-bg:#122f2a; --open:#f08cc0; --open-bg:#32182a;
+  --warn:#e3a34a; --soft:#1e2631;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 4.5rem)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:17px;line-height:1.62}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+a{color:var(--net);text-decoration-thickness:1px;text-underline-offset:2px}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--net);outline-offset:2px}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--paper);border-bottom:1px solid var(--line);
+  display:flex;gap:.9rem;align-items:center;padding:.55rem 1rem;font-family:var(--sans)}
+.brand{display:flex;align-items:center;gap:.55rem;font-weight:700;font-size:1.08rem;color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand svg{width:30px;height:30px;flex:none}
+.search{flex:1;min-width:0;position:relative;max-width:30rem}
+.search input{width:100%;font:inherit;font-size:.95rem;padding:.42rem .7rem;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.hits{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--paper);border:1px solid var(--line);border-radius:8px;
+  max-height:60vh;overflow:auto;box-shadow:0 8px 24px rgba(10,20,40,.18);display:none}
+.hits.on{display:block}
+.hits button{display:block;width:100%;text-align:left;font:inherit;font-size:.9rem;background:none;border:0;border-bottom:1px solid var(--line);
+  padding:.5rem .7rem;color:var(--ink);cursor:pointer}
+.hits button:hover{background:var(--soft)}
+.hits small{display:block;color:var(--mute)}
+.only{display:flex;align-items:center;gap:.4rem;font-size:.88rem;color:var(--mute);white-space:nowrap;cursor:pointer}
+.only input{accent-color:var(--ct);width:1rem;height:1rem}
+
+/* layout */
+.wrap{display:grid;grid-template-columns:15rem minmax(0,1fr);max-width:76rem;margin:0 auto}
+nav.side{font-family:var(--sans);font-size:.93rem;padding:1.2rem .6rem 2rem 1rem;position:sticky;top:calc(env(safe-area-inset-top,0px) + 3.2rem);
+  align-self:start;max-height:calc(100vh - 3.2rem);overflow:auto}
+nav.side h2{font-size:.82rem;font-weight:700;color:var(--mute);margin:1.1rem 0 .3rem;letter-spacing:.01em}
+nav.side a{display:block;padding:.24rem .55rem;border-radius:5px;color:var(--ink);text-decoration:none;border-left:3px solid transparent}
+nav.side a:hover{background:var(--soft)}
+nav.side a[aria-current="page"]{border-left-color:var(--net);background:var(--paper);font-weight:700}
+main{background:var(--paper);border-left:1px solid var(--line);border-right:1px solid var(--line);min-height:100vh;padding:1.6rem 2.2rem 4rem}
+.view{display:none;max-width:47rem}
+.view.on{display:block}
+h1{font-size:2rem;line-height:1.2;font-weight:400;margin:.2rem 0 .3rem;border-bottom:1px solid var(--line);padding-bottom:.45rem}
+.sub{font-family:var(--sans);font-size:.88rem;color:var(--mute);margin:0 0 1rem}
+h2{font-size:1.4rem;font-weight:400;margin:2rem 0 .5rem;border-bottom:1px solid var(--line);padding-bottom:.2rem}
+h3{font-size:1.08rem;margin:1.3rem 0 .3rem}
+p{margin:.55rem 0}
+ul,ol{padding-left:1.4rem;margin:.5rem 0}
+li{margin:.2rem 0}
+.toc{font-family:var(--sans);font-size:.9rem;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:.6rem .9rem;margin:1rem 0;display:inline-block;min-width:14rem}
+.toc b{display:block;margin-bottom:.2rem}
+.toc ol{margin:0;padding-left:1.3rem}
+.toc button{font:inherit;background:none;border:0;padding:0;color:var(--net);cursor:pointer;text-align:left}
+.toc button:hover{text-decoration:underline}
+
+/* results */
+.res{border:1px solid var(--line);border-left:4px solid var(--mute);border-radius:4px;padding:.55rem .9rem .6rem;margin:.9rem 0;background:var(--paper)}
+.res .h{font-family:var(--sans);font-size:.9rem;color:var(--mute);margin-bottom:.15rem}
+.res .h b{color:var(--ink)}
+.res p{margin:.3rem 0}
+.res.ct{border-left-color:var(--ct);background:var(--ct-bg)}
+.res.ct .h b{color:var(--ct)}
+.res.open{border-left-color:var(--open);border-left-style:dashed;background:var(--open-bg)}
+.res.open .h b{color:var(--open)}
+.src{font-family:var(--sans);font-size:.82rem;white-space:nowrap}
+body.onlyct .res:not(.ct){opacity:.32}
+.legend{font-family:var(--sans);font-size:.88rem;display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;margin:.8rem 0;color:var(--mute)}
+.legend span::before{content:"";display:inline-block;width:.9rem;height:.9rem;vertical-align:-.12rem;margin-right:.4rem;border-left:4px solid var(--mute);background:var(--soft)}
+.legend .l-ct::before{border-left-color:var(--ct);background:var(--ct-bg)}
+.legend .l-open::before{border-left:4px dashed var(--open);background:var(--open-bg)}
+
+/* math */
+i.v,.res i,.view p i,li i{font-style:italic}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.92em;line-height:1.15;margin:0 .15em}
+.fr>span:first-child{border-bottom:1px solid currentColor;padding:0 .25em}
+.fr>span:last-child{padding:0 .25em}
+.eq{display:block;text-align:center;margin:.6rem 0;overflow-x:auto;white-space:nowrap}
+sup,sub{line-height:0;font-size:.74em}
+
+/* figures */
+figure{margin:1.1rem 0;border:1px solid var(--line);border-radius:6px;background:var(--paper);padding:.6rem .7rem .5rem}
+figure.r{float:right;width:19rem;margin:.3rem 0 .8rem 1.3rem}
+figure svg{display:block;width:100%;height:auto;touch-action:none}
+figcaption{font-family:var(--sans);font-size:.85rem;color:var(--mute);line-height:1.4;margin-top:.4rem}
+.ctl{font-family:var(--sans);font-size:.88rem;display:flex;flex-wrap:wrap;gap:.3rem .8rem;align-items:center;margin-top:.4rem}
+.ctl input[type=range]{flex:1;min-width:8rem;accent-color:var(--net)}
+.ctl output{font-variant-numeric:tabular-nums}
+.M{stroke:var(--ink);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.S{stroke:var(--net);stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.S2{stroke:var(--net);stroke-width:1.6;fill:none;stroke-dasharray:5 4;stroke-linecap:round}
+.dsh{stroke:var(--mute);stroke-width:1;fill:none;stroke-dasharray:3 4}
+.thin{stroke:var(--mute);stroke-width:1;fill:none}
+.nb{stroke:var(--net);fill:none;stroke-opacity:.13;stroke-linecap:round;stroke-linejoin:round}
+.pt{fill:var(--ink)} .ps{fill:var(--net)} .pe{fill:var(--open)} .ph{fill:var(--paper);stroke:var(--ink);stroke-width:2;cursor:grab}
+.lb{font-family:var(--sans);font-size:13px;fill:var(--ink)} .lbn{font-family:var(--sans);font-size:13px;fill:var(--net)} .lbm{font-family:var(--sans);font-size:12px;fill:var(--mute)}
+.pp{stroke:var(--paper);fill:none;stroke-linecap:round;stroke-linejoin:round}
+.clear{clear:both}
+#f-bin svg{max-width:27rem;margin:0 auto}
+#f-claw svg,#f-square svg{max-width:17rem;margin:0 auto}
+.flash{outline:2px solid var(--net);outline-offset:3px}
+
+/* tables */
+.tw{overflow-x:auto;margin:.8rem 0}
+table{border-collapse:collapse;font-family:var(--sans);font-size:.9rem;width:100%}
+th,td{border:1px solid var(--line);padding:.4rem .55rem;text-align:left;vertical-align:top}
+th{background:var(--soft)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.cards figure{margin:0}
+.idx{columns:2;column-gap:2rem;padding-left:1.2rem}
+.idx li{break-inside:avoid}
+footer{font-family:var(--sans);font-size:.82rem;color:var(--mute);margin-top:3rem;border-top:1px solid var(--line);padding-top:.7rem}
+
+@media (max-width: 860px){
+  .wrap{display:block}
+  nav.side{position:static;max-height:none;display:flex;gap:.3rem;overflow-x:auto;padding:.5rem .7rem;border-bottom:1px solid var(--line);background:var(--paper);white-space:nowrap}
+  nav.side h2{display:none}
+  nav.side a{border-left:0;border-bottom:3px solid transparent;padding:.25rem .5rem}
+  nav.side a[aria-current="page"]{border-bottom-color:var(--net);background:var(--soft)}
+  main{padding:1rem 1rem 3rem;border:0}
+  figure.r{float:none;width:auto;margin:1rem 0}
+  .cards{grid-template-columns:1fr}
+  .idx{columns:1}
+  .only span{display:none}
+  h1{font-size:1.6rem}
+  .brand span{display:none}
+}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#main" aria-label="Steiner wiki, go to the main page">
+    <svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="14" class="M" style="stroke-width:1.5"/><path class="S" d="M15 15 L15 4 M15 15 L5.5 20.5 M15 15 L24.5 20.5"/><circle cx="15" cy="15" r="2.2" class="ps"/></svg>
+    <span>Steiner wiki</span>
+  </a>
+  <div class="search">
+    <input id="q" type="search" placeholder="Search theorems and questions" aria-label="Search theorems and questions" autocomplete="off">
+    <div class="hits" id="hits"></div>
+  </div>
+  <label class="only" title="Dim results by other authors"><input type="checkbox" id="only"><span>Cherkashin and Teplitskaya only</span></label>
+</header>
+
+<div class="wrap">
+<nav class="side" id="nav" aria-label="Articles">
+  <h2>Navigation</h2>
+  <a href="#main">Main page</a>
+  <h2>Steiner trees</h2>
+  <a href="#steiner">Steiner problem</a>
+  <a href="#uniqueness">Uniqueness</a>
+  <a href="#infinite">Infinite trees</a>
+  <a href="#ahlfors">Ahlfors–David regularity</a>
+  <a href="#gilbert">Gilbert–Steiner problem</a>
+  <h2>Minimizers</h2>
+  <a href="#mdm">Maximal distance minimizers</a>
+  <a href="#regularity">Regularity of minimizers</a>
+  <a href="#horseshoe">Horseshoe conjecture</a>
+  <a href="#rectangle">Minimizer for a rectangle</a>
+  <a href="#inverse">Inverse problem</a>
+  <h2>Reference</h2>
+  <a href="#open">Open questions</a>
+  <a href="#papers">Papers and authors</a>
+</nav>
+
+<main id="content">
+
+<article class="view" id="v-main" data-title="Main page">
+<h1>Steiner trees and maximal distance minimizers</h1>
+<p class="sub">A reference on two problems of one-dimensional geometric optimization. Status as of November 2026.</p>
+<p>Both problems look for a <b>connected set of minimal length</b> (one-dimensional Hausdorff measure ℋ¹) in Euclidean space ℝ<sup><i>d</i></sup>. In the <a href="#steiner">Steiner problem</a> the set must <i>connect</i> a given compact set <i>A</i>. In the <a href="#mdm">maximal distance minimizer</a> problem it must <i>come within distance r</i> of every point of a given compact set <i>M</i>. Locally the solutions look alike: line segments, angles of at least 120°, and triple branching points with angles of exactly 120°.</p>
+<div class="legend"><span class="l-ct">result by D. Cherkashin and/or Y. Teplitskaya (with coauthors)</span><span>result by other authors</span><span class="l-open">open question</span></div>
+
+<div class="cards">
+  <figure><div id="f-tri"></div>
+    <div class="ctl"><label><input type="checkbox" id="tri-melzak"> Melzak construction</label><output id="tri-out"></output></div>
+    <figcaption><b>Steiner problem for three points.</b> Drag the points. If all angles of the triangle are below 120°, a Steiner point (the Fermat–Torricelli point) appears. The Melzak construction shows the equilateral triangle on one side, its circumcircle, and the line from the third terminal to the new vertex <i>p</i>: the Steiner point is where this line meets the circle.</figcaption></figure>
+  <figure><div id="f-hs0"></div>
+    <div class="ctl"><label for="hs0">R / r</label><input type="range" id="hs0" min="1.3" max="9" step="0.02" value="5.4"><output id="hs0-out"></output></div>
+    <figcaption><b>Horseshoe.</b> The blue curve Σ covers the circle <i>M</i> with its <i>r</i>-neighborhood (light blue band). For <i>R</i> &gt; 4.98<i>r</i> it is proved that all minimizers look like this.</figcaption></figure>
+</div>
+
+<h2>Articles</h2>
+<div class="tw"><table>
+<tr><th>Article</th><th>What it covers</th></tr>
+<tr><td><a href="#steiner">Steiner problem</a></td><td>Statement, local structure, Melzak’s algorithm, complexity, Steiner ratio.</td></tr>
+<tr><td><a href="#uniqueness">Uniqueness</a></td><td>A generic planar configuration has a unique Steiner tree; Oblakov’s theorem and its short proof.</td></tr>
+<tr><td><a href="#infinite">Infinite trees</a></td><td>The general Paolini–Stepanov setting, the universal tree, the self-similar fractal tree, terminals on the sides of an angle.</td></tr>
+<tr><td><a href="#ahlfors">Ahlfors–David regularity</a></td><td>Universal bounds on the length and number of branchings of a tree inside a ball without terminals.</td></tr>
+<tr><td><a href="#gilbert">Gilbert–Steiner problem</a></td><td>Branched transport: when all branchings are triple.</td></tr>
+<tr><td><a href="#mdm">Maximal distance minimizers</a></td><td>Statement, basic properties, energetic points, complexity, Γ-convergence, uniqueness.</td></tr>
+<tr><td><a href="#regularity">Regularity of minimizers</a></td><td>Tangent rays, 2π/3 angles, finiteness of the number of curves in the plane.</td></tr>
+<tr><td><a href="#horseshoe">Horseshoe conjecture</a></td><td>Minimizers for a circle and for convex curves with large radius of curvature; the stadium.</td></tr>
+<tr><td><a href="#rectangle">Minimizer for a rectangle</a></td><td>An explicit answer made of 21 segments for small <i>r</i>.</td></tr>
+<tr><td><a href="#inverse">Inverse problem</a></td><td>Which sets are minimizers: Steiner trees, smooth curves, a polyline with infinitely many corners.</td></tr>
+<tr><td><a href="#open">Open questions</a></td><td>A digest of unsolved problems from the 2024–2026 surveys.</td></tr>
+<tr><td><a href="#papers">Papers and authors</a></td><td>The full list of papers by Cherkashin and Teplitskaya on the topic, with an index of results.</td></tr>
+</table></div>
+<footer>Statements were checked against the arXiv texts; a source link sits next to each statement. Figures marked “sketch” convey the topology, not exact dimensions.</footer>
+</article>
+
+<article class="view" id="v-steiner" data-title="Steiner problem">
+<h1>Steiner problem</h1>
+<p class="sub">The shortest network connecting given points</p>
+<figure class="r"><div id="f-local"></div><figcaption>Local structure of a Steiner tree: a terminal of degree 1, a terminal of degree 2 (angle ≥ 120°), a branching point (three angles of 120°).</figcaption></figure>
+<p>The (finite) <b>Steiner problem</b>: for a finite set <i>P</i> = {<i>x</i><sub>1</sub>, …, <i>x</i><sub><i>n</i></sub>} ⊂ ℝ<sup><i>d</i></sup> find a connected set St(<i>P</i>) of minimal length containing <i>P</i>. A solution is called a <b>Steiner tree</b>, and the points <i>x</i><sub><i>i</i></sub> are called <b>terminals</b>.</p>
+
+<h2>Classical properties</h2>
+<div class="res"><div class="h"><b>Structure of a solution</b> (see Gilbert–Pollak, 1968; Hwang–Richards–Winter, 1992)</div>
+<ul>
+<li>A solution exists (not necessarily unique) and is a finite union of segments forming a tree.</li>
+<li>Every vertex has degree at most 3; only terminals can have degree 1 or 2.</li>
+<li>The angle between any two adjacent edges is at least 2π/3. At a <b>branching point</b> (a vertex of degree 3) all three angles equal 2π/3 and the three edges lie in one two-dimensional plane, for every <i>d</i>.</li>
+<li>There are at most <i>n</i> − 2 Steiner points (branching points outside <i>P</i>). If there are exactly <i>n</i> − 2, all terminals have degree 1 and the tree is called <b>full</b>.</li>
+</ul></div>
+<p>A <b>locally minimal tree</b> is a connected acyclic set <i>S</i> ⊃ <i>P</i> that, in a small neighborhood of each of its points, coincides with a Steiner tree for the points on the boundary of the neighborhood. It keeps the local properties above but may be longer than a solution.</p>
+<p>The <b>topology</b> of a tree is the abstract graph with labeled terminals and unlabeled Steiner points.</p>
+
+<div class="res"><div class="h"><b>Number of full topologies</b> (Gilbert–Pollak, 1968)</div>
+<p>The number of full topologies with <i>n</i> terminals equals <span class="fr"><span>(2<i>n</i> − 4)!</span><span>2<sup><i>n</i>−2</sup> (<i>n</i> − 2)!</span></span>.</p></div>
+
+<div class="res"><div class="h"><b>Uniqueness of the realization of a topology</b> (Melzak, 1961; Gilbert–Pollak, 1968; Hwang–Weng, 1992)</div>
+<p>For a given topology <i>T</i> and configuration <i>P</i> there is at most one locally minimal tree. For a full topology the length, as a function of the positions of the branching points, is convex and has a unique local minimum.</p></div>
+
+<figure><div id="f-square"></div><figcaption>Vertices of a square: two different Steiner trees of the same length (1 + √3)·<i>a</i>. Non-uniqueness is possible starting from <i>n</i> = 4.</figcaption></figure>
+
+<h2>Constructions and formulas</h2>
+<div class="res"><div class="h"><b>Melzak reduction</b> (Melzak, 1961)</div>
+<p>If a branching point <i>q</i> of a full planar locally minimal tree is adjacent to two pendant terminals <i>p</i><sub>1</sub>, <i>p</i><sub>2</sub>, they can be replaced by the single vertex <i>p</i> of the equilateral triangle <i>pp</i><sub>1</sub><i>p</i><sub>2</sub> (on the other side from <i>q</i>), with the remaining edge prolonged to <i>p</i>: the length does not change. This yields a ruler-and-compass construction of planar Steiner trees. Turn on “Melzak construction” on the <a href="#main">main page</a>.</p></div>
+<div class="res"><div class="h"><b>Maxwell’s formula</b></div>
+<p>For a full locally minimal tree with terminals <i>p</i><sub>1</sub>, …, <i>p</i><sub><i>n</i></sub> ∈ ℂ the length equals Σ <i>c̄</i><sub><i>k</i></sub><i>p</i><sub><i>k</i></sub>, where <i>c</i><sub><i>k</i></sub> is the unit complex number giving the outer direction of the edge at <i>p</i><sub><i>k</i></sub>. The length depends only on the terminals and the directions at them; moreover Σ <i>c̄</i><sub><i>k</i></sub> = 0.</p></div>
+<div class="res"><div class="h"><b>Terminals on a circle</b> (Rubinstein–Thomas, 1992)</div>
+<p>Let <i>p</i><sub>1</sub>, …, <i>p</i><sub><i>n</i></sub> lie on a circle of radius <i>r</i> in cyclic order. If at most one of the segments [<i>p</i><sub><i>i</i></sub><i>p</i><sub><i>i</i>+1</sub>] is longer than <i>r</i>, then a Steiner tree has no Steiner points.</p></div>
+
+<h2>Complexity</h2>
+<div class="res"><div class="h"><b>NP-hardness</b> (Garey–Graham–Johnson, 1977; Rubinstein–Thomas–Wormald, 1997)</div>
+<p>The Euclidean Steiner problem is NP-hard, even when the terminals lie on two lines in the plane.</p></div>
+<div class="res"><div class="h"><b>Dimension ≥ 3</b> (W. Smith, 1992)</div>
+<p>The local structure is the same, but Steiner points are no longer expressible in radicals; there are almost no explicit series of nonplanar solutions. Even for the vertices of a regular simplex in high dimensions the trees are unknown.</p></div>
+
+<h2>Steiner ratio</h2>
+<p>The <b>Steiner ratio</b> is the infimum, over all finite point sets, of the ratio of the length of a Steiner tree to the length of a minimum spanning tree.</p>
+<div class="res open"><div class="h"><b>Gilbert–Pollak conjecture</b> (1968)</div>
+<p>In the plane the Steiner ratio equals √3/2 ≈ 0.866 and is attained on the vertices of an equilateral triangle. The conjecture is open (Ivanov–Tuzhilin, 2012); the best proven lower bound is about 0.824 (Chung–Graham, 1985).</p></div>
+<div class="res"><div class="h"><b>General bounds</b> (Graham–Hwang, 1976; Smith–Smith, 1995)</div>
+<p>In every ℝ<sup><i>d</i></sup> the Steiner ratio is at least 1/√3, and in every metric space at least 1/2. The best known examples in ℝ<sup><i>d</i></sup> are the “<i>d</i>-sausages”; for <i>d</i> = 3 they give about 0.784.</p></div>
+<p>See also: <a href="#uniqueness">uniqueness</a>, <a href="#infinite">infinite trees</a>, <a href="#ahlfors">quantitative regularity</a>.</p>
+</article>
+
+<article class="view" id="v-uniqueness" data-title="Uniqueness">
+<h1>Uniqueness of the Steiner tree</h1>
+<p class="sub">Ambiguous configurations are rare</p>
+<p>A set of <i>n</i> terminals is called <b>ambiguous</b> if it has several Steiner trees. The simplest example is the vertices of a square (see <a href="#steiner">Steiner problem</a>). Configurations of <i>n</i> points in the plane form the space ℝ<sup>2<i>n</i></sup>.</p>
+
+<h2>The plane</h2>
+<div class="res ct"><div class="h"><b>Theorem</b> (Basok–Cherkashin–Rastegaev–Teplitskaya, IMRN 2024) <a class="src" href="https://arxiv.org/abs/1809.01463">arXiv:1809.01463</a></div>
+<p>For <i>n</i> ≥ 4 the set of ambiguous planar <i>n</i>-point configurations has Hausdorff dimension 2<i>n</i> − 1 as a subset of ℝ<sup>2<i>n</i></sup>. In particular it has measure zero: <b>a generic planar configuration has a unique Steiner tree</b>.</p>
+<p>Moreover, the set of configurations on which at least two <i>locally minimal</i> trees have the same length also has dimension at most 2<i>n</i> − 1.</p></div>
+<p>The proof relies on the theory of subanalytic sets (Bierstone–Milman) and on the following theorem.</p>
+<div class="res"><div class="h"><b>Oblakov’s theorem</b> (2009)</div>
+<p>There are no two distinct topologies <i>T</i><sub>1</sub>, <i>T</i><sub>2</sub> and a planar configuration <i>P</i> for which the locally minimal trees <i>S</i><sub><i>T</i>1</sub>(<i>P</i>) and <i>S</i><sub><i>T</i>2</sub>(<i>P</i>) are codirected at the terminals, that is, coincide in a small neighborhood of <i>P</i>.</p></div>
+<div class="res ct"><div class="h"><b>A short proof of Oblakov’s theorem</b> (Cherkashin, 2026) <a class="src" href="https://arxiv.org/abs/2608.22585">arXiv:2608.22585</a></div>
+<p>The new ingredient is a combinatorial theorem: let a cubic bipartite plane graph be drawn so that at every vertex the three edges are parallel to three fixed pairwise non-parallel lines (one edge per direction). Then the number of “claws” (three edges in one open half-plane) equals the number of “tripods”.</p>
+<figure><div id="f-claw"></div><figcaption>A claw (left) and a tripod (right).</figcaption></figure></div>
+
+<h2>Connectedness of the set of unambiguous configurations</h2>
+<div class="res ct"><div class="h"><b>Theorem</b> (Basok–Cherkashin–Rastegaev–Teplitskaya, 2024) <a class="src" href="https://arxiv.org/abs/1809.01463">arXiv:1809.01463</a></div>
+<p>The set of <i>n</i>-point configurations in ℝ<sup><i>d</i></sup> with a unique Steiner tree is path-connected. The proof uses the <a href="#infinite">universal Steiner tree</a>, which contains a unique tree of any given combinatorics.</p></div>
+<div class="res"><div class="h"><b>Theorem</b> (Edelsbrunner–Strelkova, 2012)</div>
+<p>For a fixed embedding class, the set of configurations with a unique Steiner tree of that class is path-connected.</p></div>
+
+<h2>Riemannian manifolds</h2>
+<div class="res ct"><div class="h"><b>Alternative</b> (Basok–Cherkashin–Rastegaev–Teplitskaya, 2024) <a class="src" href="https://arxiv.org/abs/1809.01463">arXiv:1809.01463</a></div>
+<p>Replace the plane by an analytic Riemannian manifold <i>M</i>. Then the set of <i>n</i>-point configurations admitting two locally minimal trees of equal length either has Hausdorff dimension strictly less than <i>n</i>·dim <i>M</i> or has non-empty interior. An example of a two-dimensional surface realizing the second option is constructed.</p></div>
+
+<h2>A corollary for minimizers</h2>
+<div class="res ct"><div class="h"><b>Proposition</b> (Cherkashin–Teplitskaya, 2024) <a class="src" href="https://arxiv.org/abs/2212.05607">arXiv:2212.05607</a></div>
+<p>Call a finite <i>M</i> ambiguous if the <a href="#mdm">maximal distance minimizer</a> problem has several solutions for all small enough <i>r</i>. For <i>n</i> ≥ 4 the set of planar <i>n</i>-point ambiguous <i>M</i> has Hausdorff dimension 2<i>n</i> − 1.</p></div>
+<div class="res open"><div class="h"><b>Open</b></div>
+<p>Is the Steiner tree unique for a generic configuration in ℝ<sup><i>d</i></sup>, <i>d</i> ≥ 3? Does Oblakov’s theorem hold in ℝ<sup><i>d</i></sup>? See <a href="#open">open questions</a>.</p></div>
+</article>
+
+<article class="view" id="v-infinite" data-title="Infinite trees">
+<h1>Infinite Steiner trees</h1>
+<p class="sub">The general Steiner problem for compact sets and explicit examples with infinitely many branchings</p>
+<p>The <b>general Steiner problem</b>: for a compact set <i>A</i> ⊂ ℝ<sup><i>d</i></sup> find a closed set St of minimal length such that St ∪ <i>A</i> is connected. A solution is called a <b>Steiner set</b>, and a Steiner tree if it is connected (for example when <i>A</i> is totally disconnected).</p>
+<div class="res"><div class="h"><b>Existence and regularity theorem</b> (Paolini–Stepanov, 2013)</div>
+<p>For a compact <i>A</i> a solution exists (also in any proper metric space). If ℋ¹(St) &lt; ∞, then:</p>
+<ul><li>St ∪ <i>A</i> is compact and St contains no loops;</li>
+<li>St \ <i>A</i> has at most countably many connected components, each of positive length;</li>
+<li>the closure of every component is a topological tree with endpoints on <i>A</i> and at most countably many branching points;</li>
+<li>for almost every <i>ε</i> &gt; 0 the set St<sub><i>ε</i></sub> = St \ <i>B</i><sub><i>ε</i></sub>(<i>A</i>) is an embedding of a finite graph.</li></ul></div>
+<div class="res ct"><div class="h"><b>Example: infinite length</b> (Cherkashin–Prozorov–Teplitskaya, 2026) <a class="src" href="https://arxiv.org/abs/2602.11294">arXiv:2602.11294</a></div>
+<p>There is a countable compact set <i>A</i><sub>bad</sub> in the unit square with a single accumulation point such that every Steiner set for it has infinite length. So the assumption ℋ¹(St) &lt; ∞ is necessary.</p></div>
+
+<h2>The universal tree</h2>
+<figure><div id="f-bin"></div>
+<div class="ctl"><label for="bin">λ</label><input type="range" id="bin" min="0.08" max="0.47" step="0.005" value="0.4"><output id="bin-out"></output></div>
+<figcaption>The binary tree Σ(λ): all angles at vertices are 120°, and edge lengths on consecutive levels have ratio λ. For visibility, λ here is much larger than in the theorems.</figcaption></figure>
+<p>Let Σ(Λ) be an embedding of the infinite binary tree with root <i>y</i><sub>0</sub> = (0, 0), first descendant <i>y</i><sub>1</sub> = (1, 0), angles 2π/3 at the branchings, and ratio λ<sub><i>i</i></sub> between the edge lengths of levels <i>i</i>+1 and <i>i</i>. Let <i>A</i><sub>∞</sub>(Λ) be the set of limit points (“leaves”) together with <i>y</i><sub>0</sub>; it is uncountable.</p>
+<div class="res ct"><div class="h"><b>Theorem</b> (Paolini–Stepanov–Teplitskaya, 2015) <span class="src">Adv. Calc. Var. 8(3)</span></div>
+<p>If λ<sub><i>i</i></sub> &lt; 1/5000 and Σ λ<sub><i>i</i></sub> &lt; π/5040, then Σ(Λ) is the <b>unique</b> Steiner tree for <i>A</i><sub>∞</sub>(Λ). It is a full planar Steiner tree with infinitely many branching points connecting an uncountable set.</p>
+<p><b>Corollary (universality).</b> Every connected closed subset of Σ(Λ) is the unique Steiner tree for the set of its vertices of degree 1 and 2. Hence Σ(Λ) contains a unique Steiner tree of any finite combinatorics.</p></div>
+<div class="res ct"><div class="h"><b>Theorem: the self-similar tree</b> (Cherkashin–Teplitskaya, 2023) <a class="src" href="https://arxiv.org/abs/2302.02189">arXiv:2302.02189</a></div>
+<p>For a constant sequence λ<sub><i>i</i></sub> = λ &lt; 1/300 the tree Σ(Λ) is a Steiner tree for <i>A</i><sub>∞</sub>. This answers a question of Paolini–Stepanov–Teplitskaya: the terminal set can have <b>positive Hausdorff dimension</b>, equal to ln 2 / ln(1/λ), and the tree itself is a self-similar fractal of length 1/(1 − 2λ).</p>
+<p>The proof uses symmetries rather than stability estimates, and does not give uniqueness. Uniqueness for small enough λ was obtained by Paolini and Stepanov (<a href="https://arxiv.org/abs/2304.01932">arXiv:2304.01932</a>).</p></div>
+
+<h2>Terminals on the sides of an angle</h2>
+<p>Consider an angle of size 2α with vertex <i>A</i><sub>∞</sub> and points <i>A</i><sub><i>k</i></sub>, <i>B</i><sub><i>k</i></sub> on its sides at distance λ<sup><i>k</i>−1</sup> from the vertex. Let 𝒜<sub>1</sub> = {<i>A</i><sub>∞</sub>} ∪ {<i>A</i><sub><i>k</i></sub>, <i>B</i><sub><i>k</i></sub>}<sub><i>k</i>≥1</sub>.</p>
+<figure><div id="f-angle"></div><figcaption>One of the solutions for 𝒜<sub>1</sub> with α = π/36, λ = 1/2 (computed numerically and checked against the length formula of the theorem). The solution splits into similar full trees on five terminals.</figcaption></figure>
+<div class="res ct"><div class="h"><b>Theorem 1</b> (Cherkashin–Paolini–Teplitskaya, J. Comb. Optim. 2025) <a class="src" href="https://arxiv.org/abs/2404.11546">arXiv:2404.11546</a></div>
+<p>Let 0 &lt; α &lt; π/6, 0 &lt; λ ≤ 1/2 and √λ &lt; cos(π/3 + α) / cos(π/3 − α). Then every solution for 𝒜<sub>1</sub> is a union of full trees on 5 terminals, that is, it is <b>decomposable</b>. Its length equals</p>
+<span class="eq">| cos α + √3 sin α + <span class="fr"><span>2λ</span><span>1 − λ²</span></span> e<sup>π<i>i</i>/6</sup> sin α + <span class="fr"><span>2λ²</span><span>1 − λ²</span></span> e<sup>−π<i>i</i>/6</sup> sin α |.</span>
+<p><b>Corollary.</b> For the finite set {<i>A</i><sub>1</sub>, …, <i>A</i><sub>2<i>k</i>+1</sub>, <i>B</i><sub>1</sub>, …, <i>B</i><sub>2<i>k</i></sub>} the problem has 2<sup><i>k</i></sup> − 1 different solutions (as stated in the paper), each a union of rescaled and mirrored copies of the tree on {<i>A</i><sub>1</sub>, <i>A</i><sub>2</sub>, <i>A</i><sub>3</sub>, <i>B</i><sub>1</sub>, <i>B</i><sub>2</sub>}. These solutions resemble the Chung–Graham “ladders”.</p></div>
+<div class="res ct"><div class="h"><b>Theorem 2</b> (Cherkashin–Paolini–Teplitskaya, 2025) <a class="src" href="https://arxiv.org/abs/2404.11546">arXiv:2404.11546</a></div>
+<p>Add the segment [<i>A</i><sub>0</sub><i>B</i><sub>0</sub>], where |<i>A</i><sub>0</sub><i>A</i><sub>∞</sub>| = |<i>B</i><sub>0</sub><i>A</i><sub>∞</sub>| = 1/λ − tan α / (√3 λ), and put 𝒜<sub>0</sub> = 𝒜<sub>1</sub> ∪ [<i>A</i><sub>0</sub><i>B</i><sub>0</sub>]. Under the same assumptions:</p>
+<ul><li>the problem for 𝒜<sub>0</sub> has exactly two solutions, symmetric with respect to the bisector; both are <b>indecomposable</b> trees;</li>
+<li>the length of the solutions is cos α / λ − sin α / (√3 λ) + √3 sin α / (1 − λ);</li>
+<li>each solution is self-similar: the homothety with center <i>A</i><sub>∞</sub> and ratio λ² maps it into itself.</li></ul></div>
+<div class="res ct"><div class="h"><b>Parallelism of locally minimal immersions</b> (Cherkashin–Paolini–Teplitskaya, 2025) <a class="src" href="https://arxiv.org/abs/2404.11546">arXiv:2404.11546</a></div>
+<p>Two locally minimal immersions of the same (possibly infinite) graph into ℝ<sup><i>d</i></sup> with the same fixed vertices have equal length, if it is finite, and corresponding edges are parallel.</p></div>
+<p>See also <a href="#ahlfors">the tree with four accumulation points of branchings</a>.</p>
+</article>
+
+<article class="view" id="v-ahlfors" data-title="Ahlfors–David regularity">
+<h1>Ahlfors–David regularity of Steiner trees</h1>
+<p class="sub">How much tree can fit in a ball without terminals</p>
+<p>The Paolini–Stepanov theorem (see <a href="#infinite">infinite trees</a>) says that away from the terminals a Steiner tree is a finite graph, but not how large. The paper by Cherkashin, Prozorov and Teplitskaya gives quantitative bounds depending <b>only on the dimension</b>.</p>
+<p>A Steiner tree is called <b>Ahlfors–David regular</b> if there are <i>c</i>, <i>C</i> &gt; 0 such that <i>c</i> ≤ ℋ¹(St ∩ <i>B</i><sub><i>r</i></sub>(<i>x</i>)) / <i>r</i> ≤ <i>C</i> for every ball centered at <i>x</i> ∈ St that does not intersect <i>A</i>. One can always take <i>c</i> = 2. For a finite <i>A</i> the solution is regular in the usual sense with sharp constants 1 and 3.</p>
+
+<h2>Dimension <i>d</i> &gt; 2</h2>
+<p>In ℝ<sup><i>d</i></sup>, <i>d</i> &gt; 2, there is no universal constant <i>C</i> for the whole ball: <i>N</i> random points on the sphere give a tree of arbitrarily large length inside the ball. So one bounds the length in a smaller ball.</p>
+<figure class="r"><div id="f-ball"></div><figcaption>A ball <i>B</i><sub><i>s</i></sub>(<i>x</i>) without terminals and the concentric ball of radius ρ<i>s</i>, in which the length and the number of segments are bounded universally.</figcaption></figure>
+<div class="res ct"><div class="h"><b>Theorem</b> (Cherkashin–Prozorov–Teplitskaya, 2026) <a class="src" href="https://arxiv.org/abs/2602.11294">arXiv:2602.11294</a></div>
+<p>Let <i>d</i> &gt; 2, let St be a Steiner tree for <i>A</i> with ℋ¹(St) &lt; ∞, let the open ball <i>B</i><sub><i>s</i></sub>(<i>x</i>) be disjoint from <i>A</i>, and let ρ ∈ (0, 1). Then</p>
+<span class="eq"><span class="fr"><span>ℋ¹(St ∩ <i>B</i><sub>ρ<i>s</i></sub>(<i>x</i>))</span><span><i>s</i></span></span> ≤ <span style="font-size:1.3em">(</span><span class="fr"><span>144<i>d</i></span><span>1 − ρ</span></span><span style="font-size:1.3em">)</span><sup><i>d</i>−2</sup>.</span>
+<p><b>Corollary.</b> St ∩ <i>B</i><sub>ρ<i>s</i></sub>(<i>x</i>) consists of at most (144<i>d</i> / (1 − ρ))<sup><i>d</i>−1</sup> segments; the number of branching points in this ball is bounded by the same quantity.</p>
+<p><b>In the Paolini–Stepanov notation.</b> For all <i>ε</i> &gt; 0, ρ ∈ (0, 1), <i>x</i> ∈ St<sub><i>ε</i></sub>: ℋ¹(St<sub><i>ε</i></sub> ∩ <i>B</i><sub>ρ<i>ε</i></sub>(<i>x</i>)) &lt; <i>ε</i>·(144<i>d</i> / (1 − ρ))<sup><i>d</i>−2</sup>.</p></div>
+<div class="res ct"><div class="h"><b>Points on a sphere</b> (Cherkashin–Prozorov–Teplitskaya, 2026) <a class="src" href="https://arxiv.org/abs/2602.11294">arXiv:2602.11294</a></div>
+<p>For <i>d</i> &gt; 2 a Steiner tree for any <i>t</i> points on the sphere 𝕊<sup><i>d</i>−1</sup> has length at most <i>c</i><sub><i>d</i></sub>·<i>t</i><sup>(<i>d</i>−2)/(<i>d</i>−1)</sup>, where <i>c</i><sub><i>d</i></sub> = 2 + <i>o</i>(1) and <i>c</i><sub><i>d</i></sub> ≤ <i>c</i><sub>3</sub> = 11.78… for all <i>d</i>.</p></div>
+<div class="res ct"><div class="h"><b>Lower bound</b> (Cherkashin–Prozorov–Teplitskaya, 2026) <a class="src" href="https://arxiv.org/abs/2602.11294">arXiv:2602.11294</a></div>
+<p>For the cube vertices <i>A</i> = {−1/√<i>d</i>, 1/√<i>d</i>}<sup><i>d</i></sup> and 1 ≥ ρ ≥ 1 − 1/(10<i>d</i>) one has ℋ¹(St ∩ <i>B</i><sub>ρ</sub>(<i>o</i>)) ≥ <span class="fr"><span>2(2<sup><i>d</i></sup> − 1)</span><span>√(3<i>d</i>)</span></span>·(1 − 2√(3<i>d</i>(1 − ρ²))). A large gap remains between the upper and lower bounds.</p></div>
+<div class="clear"></div>
+
+<h2>The plane</h2>
+<figure class="r"><div id="f-cocirc"></div><figcaption>The first step of the construction: the tree for the rectangle {±e<sup>π<i>i</i>/6</sup>, ±e<sup>5π<i>i</i>/6</sup>} meets the circle at angle π/3. Terminals are then added, accumulating at these four points.</figcaption></figure>
+<div class="res ct"><div class="h"><b>Sharp structural results</b> (Cherkashin–Prozorov–Teplitskaya, 2026) <a class="src" href="https://arxiv.org/abs/2602.11294">arXiv:2602.11294</a></div>
+<p>Let St be a Steiner tree of finite length for <i>A</i> ⊂ ℝ², and let the open disc <i>B</i><sub><i>r</i></sub>(<i>x</i>) be disjoint from <i>A</i>.</p>
+<ul>
+<li>The length of St ∩ <i>B</i><sub><i>r</i></sub>(<i>x</i>) is at most 2π<i>r</i>.</li>
+<li>The total length of the components of St ∩ <i>B</i><sub><i>r</i></sub>(<i>x</i>) that have at least one branching point is at most 4π<i>r</i>/3 + <i>r</i> = 5.188…·<i>r</i>.</li>
+<li>At most two components of St ∩ <i>B</i><sub><i>r</i></sub>(<i>x</i>) have branching points.</li>
+<li>A full Steiner tree with at least three terminals on the unit circle has length at least √3.</li>
+<li>For a full tree on a finite subset of the unit circle, ℋ¹(St) = Σ cos β<sub><i>i</i></sub>, where β<sub><i>i</i></sub> is the angle between the edge at a terminal and the radius.</li>
+</ul></div>
+<div class="res ct"><div class="h"><b>Four accumulation points</b> (Cherkashin–Prozorov–Teplitskaya, 2026) <a class="src" href="https://arxiv.org/abs/2602.11294">arXiv:2602.11294</a></div>
+<p>There is a full Steiner tree for a countable terminal set on a circle whose set of branching points has 4 accumulation points. Hence even in the plane the bound on the number of segments fails for ρ = 1.</p>
+<p>This number cannot be increased: if <i>A</i> is a totally disconnected subset of a circle and the solution is a full tree, then <i>A</i> has at most 4 accumulation points. As a consequence, in a disc without terminals the set of branching points has at most 8 accumulation points (a bound that does not seem to be tight).</p></div>
+<div class="clear"></div>
+<p>The same arguments carry over word for word to the <a href="#gilbert">Gilbert–Steiner problem</a> with <i>p</i> = 0. Questions about sharp constants are in <a href="#open">open questions</a>.</p>
+</article>
+
+<article class="view" id="v-gilbert" data-title="Gilbert–Steiner problem">
+<h1>Gilbert–Steiner problem</h1>
+<p class="sub">Branched optimal transport with finite supports</p>
+<p>Given two measures μ<sup>+</sup>, μ<sup>−</sup> of equal mass with finite supports, a <b>flow</b> is a finite graph with masses on the edges that transports μ<sup>+</sup> to μ<sup>−</sup>; vertices outside the supports are called branching points. Moving mass <i>m</i> along a segment of length <i>l</i> costs <i>c</i>(<i>m</i>)·<i>l</i>; the classical case is <i>c</i>(<i>m</i>) = <i>m</i><sup><i>p</i></sup> for a fixed 0 &lt; <i>p</i> &lt; 1. Concavity of the cost makes merging flows profitable. As <i>p</i> → 0 one recovers the Steiner problem.</p>
+<figure><div id="f-gil"></div>
+<div class="ctl"><label for="gp">p</label><input type="range" id="gp" min="0" max="0.99" step="0.01" value="0.5"><label for="gm">share of m₁</label><input type="range" id="gm" min="0.05" max="0.95" step="0.01" value="0.5"><output id="gil-out"></output></div>
+<figcaption>A triple branching: the source on the left, two sinks on the right. The angles are determined by the balance <i>m</i><sub>1</sub><sup><i>p</i></sup><i>e</i><sub>1</sub> + <i>m</i><sub>2</sub><sup><i>p</i></sup><i>e</i><sub>2</sub> + (<i>m</i><sub>1</sub>+<i>m</i><sub>2</sub>)<sup><i>p</i></sup><i>e</i> = 0. For <i>p</i> = 0 the angle between the branches is 120°.</figcaption></figure>
+
+<h2>Degree of branching points</h2>
+<div class="res"><div class="h"><b>Theorem</b> (Lippmann–Sanmartín–Hamprecht, 2022)</div>
+<p>A solution of the planar Gilbert–Steiner problem has no branching point of degree 5 or more.</p></div>
+<div class="res ct"><div class="h"><b>Theorem</b> (Cherkashin–Petrov, Pure Appl. Funct. Anal. 2025) <a class="src" href="https://arxiv.org/abs/2309.04202">arXiv:2309.04202</a></div>
+<p>In a solution of the planar Gilbert–Steiner problem <b>every branching point has degree 3</b>. The statement holds for all “admissible” cost functions of the form <i>c</i>(<i>t</i>) = (∫ sin²(<i>tx</i>) dλ(<i>x</i>))<sup>1/2</sup>, where λ is a Borel measure with uncountable support and ∫ min(<i>x</i>², 1) dλ &lt; ∞; the case <i>c</i>(<i>t</i>) = <i>t</i><sup><i>p</i></sup> corresponds to dλ = const·<i>x</i><sup>−2<i>p</i>−1</sup>d<i>x</i>.</p></div>
+<div class="res ct"><div class="h"><b>Theorem</b> (Cherkashin, 2025; to appear in J. Convex Anal.) <a class="src" href="https://arxiv.org/abs/2507.13532">arXiv:2507.13532</a></div>
+<p>The Gilbert–Steiner problem in ℝ<sup><i>d</i></sup> with cost <i>m</i><sup><i>p</i></sup> admits only triple branchings <b>if and only if <i>d</i> = 2 or <i>p</i> &lt; 1/2</b>.</p>
+<ul><li>If <i>p</i> ≥ 1/2, there is a solution consisting of <i>d</i> + 1 segments adjacent to one branching point.</li>
+<li>For <i>p</i> = 1/2 the degree of a branching point in ℝ<sup><i>d</i></sup> is at most <i>d</i> + 1.</li>
+<li>General condition: if <i>c</i> is differentiable and (<i>c</i>²)′ is strictly convex, there are no branchings of degree greater than 3; for <i>k</i> = 3 the three edges are coplanar.</li></ul></div>
+<div class="res"><div class="h"><b>Optimality criterion for a star</b> (Volz–Brazil–Ras–Swanepoel–Thomas, 2013)</div>
+<p>For one source <i>q</i> and sinks <i>p</i><sub>1</sub>, …, <i>p</i><sub><i>n</i></sub> with masses <i>m</i><sub><i>i</i></sub>, the star centered at <i>o</i> is optimal if and only if Σ <i>c</i>(<i>m</i><sub><i>i</i></sub>)<i>e</i><sub><i>i</i></sub> + <i>c</i>(Σ <i>m</i><sub><i>i</i></sub>)<i>e</i> = 0 and |Σ<sub><i>i</i>∈<i>I</i></sub> <i>c</i>(<i>m</i><sub><i>i</i></sub>)<i>e</i><sub><i>i</i></sub>|² ≤ <i>c</i>²(Σ<sub><i>i</i>∈<i>I</i></sub> <i>m</i><sub><i>i</i></sub>) for all <i>I</i> ⊆ {1, …, <i>n</i>}.</p></div>
+<div class="res open"><div class="h"><b>Cherkashin’s question</b> (MDS 2026) <a class="src" href="https://arxiv.org/abs/2611.03403">arXiv:2611.03403</a></div>
+<p>Find non-trivial upper and lower bounds on the maximal degree of a branching point for large <i>d</i> and fixed <i>p</i> &gt; 1/2. Is there a bound depending only on <i>d</i>? Spherical codes give an upper bound (the angles between edges are bounded from below), but numerically a critical set <i>I</i> may have more than <i>d</i> elements.</p></div>
+</article>
+
+<article class="view" id="v-mdm" data-title="Maximal distance minimizers">
+<h1>Maximal distance minimizers</h1>
+<p class="sub">The shortest connected set whose <i>r</i>-neighborhood covers a given compact set</p>
+<figure class="r"><div id="f-mdm3"></div><figcaption>A minimizer for three points <i>M</i> = {<i>a</i>, <i>b</i>, <i>c</i>} and small <i>r</i>: the Steiner tree cut off at the <i>r</i>-neighborhoods of the points.</figcaption></figure>
+<p>Let <i>M</i> ⊂ ℝ<sup><i>d</i></sup> be compact. Put <i>F</i><sub><i>M</i></sub>(Σ) = max<sub><i>y</i>∈<i>M</i></sub> dist(<i>y</i>, Σ).</p>
+<ul><li><b>Primal problem.</b> For <i>l</i> &gt; 0 find a connected compact set Σ of length ℋ¹(Σ) ≤ <i>l</i> minimizing <i>F</i><sub><i>M</i></sub>(Σ).</li>
+<li><b>Dual problem.</b> For <i>r</i> &gt; 0 find a connected compact set Σ of minimal length with <i>F</i><sub><i>M</i></sub>(Σ) ≤ <i>r</i>, that is, <i>M</i> ⊂ <span style="text-decoration:overline"><i>B</i><sub><i>r</i></sub>(Σ)</span>.</li></ul>
+<p>A solution is called a <b>maximal distance minimizer</b> (an <i>r</i>-minimizer). Interpretation: the shortest gas pipeline coming within distance <i>r</i> of every house. The problem was posed in general form by Buttazzo, Oudet and Stepanov (2002), and in its current form in the papers of Paolini–Stepanov (2004) and Miranda–Paolini–Stepanov (2006).</p>
+
+<h2>Basic properties</h2>
+<div class="res"><div class="h"><b>Theorem</b> (Paolini–Stepanov, 2004; Miranda–Paolini–Stepanov, 2006)</div>
+<ul><li>A solution exists (Blaschke and Gołąb theorems).</li>
+<li>A minimizer contains no loops.</li>
+<li>A minimizer is Ahlfors regular; in the plane the constants are absolute.</li>
+<li>In the nondegenerate case the primal and dual problems have the same solutions; in particular ℋ¹(Σ) = <i>l</i> and <i>F</i><sub><i>M</i></sub>(Σ) = <i>r</i>.</li></ul></div>
+<div class="res ct"><div class="h"><b>Observations</b> (Basok–Cherkashin–Teplitskaya, 2022) <a class="src" href="https://arxiv.org/abs/2212.01903">arXiv:2212.01903</a></div>
+<p>(i) If Σ is an <i>r</i>-minimizer for some <i>M</i>, then Σ is an <i>r</i>-minimizer for the closure of <i>B</i><sub><i>r</i></sub>(Σ). (ii) Then Σ is also an <i>r′</i>-minimizer for the closure of <i>B</i><sub><i>r′</i></sub>(Σ) for all 0 &lt; <i>r′</i> &lt; <i>r</i>.</p></div>
+<p>A <b>local minimizer</b> is a connected closed set Σ of finite length with <i>F</i><sub><i>M</i></sub>(Σ) ≤ <i>r</i> that is not longer than any admissible Σ′ differing from it on a set of small diameter. Regularity properties usually hold for local minimizers as well.</p>
+<div class="clear"></div>
+
+<h2>Energetic points</h2>
+<figure class="r"><div id="f-en"></div><figcaption>An energetic point <i>x</i> ∈ Σ and a corresponding point <i>y</i> ∈ <i>M</i>: |<i>xy</i>| = <i>r</i>, and the open ball <i>B</i><sub><i>r</i></sub>(<i>y</i>) does not meet Σ.</figcaption></figure>
+<p>A point <i>x</i> ∈ Σ is called <b>energetic</b> if <i>F</i><sub><i>M</i></sub>(Σ \ <i>B</i><sub>ρ</sub>(<i>x</i>)) &gt; <i>F</i><sub><i>M</i></sub>(Σ) for all ρ &gt; 0. For such a point there is <i>y</i> ∈ <i>M</i> with |<i>xy</i>| = <i>r</i> and <i>B</i><sub><i>r</i></sub>(<i>y</i>) ∩ Σ = ∅. A minimizer splits into three parts:</p>
+<span class="eq">Σ = <i>E</i><sub>Σ</sub> ⊔ <i>X</i><sub>Σ</sub> ⊔ <i>S</i><sub>Σ</sub></span>
+<p>— non-isolated energetic points, isolated energetic points, and non-energetic points (the “Steiner part”). Near a non-energetic point the minimizer is a segment or a regular tripod. The set Σ \ <span style="text-decoration:overline"><i>B</i><sub><i>r</i></sub>(<i>M</i>)</span> is a <b>Steiner forest</b> with terminals on ∂<i>B</i><sub><i>r</i></sub>(<i>M</i>).</p>
+<div class="res ct"><div class="h"><b>The plane versus ℝ<sup><i>d</i></sup></b> (Cherkashin–Teplitskaya, survey 2024) <a class="src" href="https://arxiv.org/abs/2212.05607">arXiv:2212.05607</a></div>
+<p>In the plane the turn of an arc of a minimizer near an energetic point is less than 2π in absolute value; this is the main tool of planar proofs, and it fails in ℝ<sup><i>d</i></sup>, <i>d</i> &gt; 2. Moreover, in ℝ<sup><i>d</i></sup> a minimizer may have no non-energetic points at all: if Σ is a minimizer for <i>M</i> ⊂ ℝ<sup><i>d</i></sup>, then Σ × {0} is a minimizer for (<i>M</i> × {0}) ∪ (Σ × {<i>r</i>}) ⊂ ℝ<sup><i>d</i>+1</sup>, and all its points are non-isolated energetic.</p></div>
+<div class="clear"></div>
+
+<h2>Finite <i>M</i> and the link to Steiner trees</h2>
+<p>A minimizer for a finite <i>M</i> is a union of at most 2·#<i>M</i> − 3 segments: the problem reduces to connecting the <i>r</i>-neighborhoods of the points. If the balls are pairwise disjoint, a minimizer is a Steiner tree for some points on the spheres ∂<i>B</i><sub><i>r</i></sub>(<i>a</i>), <i>a</i> ∈ <i>M</i>. More in the article on the <a href="#inverse">inverse problem</a>.</p>
+<div class="res ct"><div class="h"><b>Approximation by Steiner trees</b> (Cherkashin–Teplitskaya, 2024) <a class="src" href="https://arxiv.org/abs/2212.05607">arXiv:2212.05607</a></div>
+<p><b>Γ-convergence.</b> If compact sets <i>M</i><sub><i>i</i></sub> converge to <i>M</i>, then the functionals <i>F</i><sub><i>M<sub>i</sub></i></sub> Γ-converge to <i>F</i><sub><i>M</i></sub> (on the space of connected compact sets of length ≤ <i>l</i> with the Hausdorff distance). Consequently every limit point of minimizers for <i>M</i><sub><i>i</i></sub> is a minimizer for <i>M</i>.</p>
+<p><b>Every minimizer is a limit of finite Steiner trees</b>: Steiner trees Σ<sub><i>k</i></sub> for finite 1/<i>k</i>-nets in Σ converge to Σ, and ℋ¹(Σ<sub><i>k</i></sub>) → ℋ¹(Σ). Similar results are due to Alvarado, Krishnamoorthy and Vixie (2021).</p></div>
+
+<h2>Complexity</h2>
+<div class="res ct"><div class="h"><b>NP-hardness</b> (Cherkashin–Teplitskaya, 2024) <a class="src" href="https://arxiv.org/abs/2212.05607">arXiv:2212.05607</a></div>
+<p>A discrete version of the problem (integer coordinates, edge lengths rounded up) is NP-complete; hence the original problem is NP-hard. The proof is a reduction to the Garey–Graham–Johnson construction for the Steiner problem.</p></div>
+<div class="res"><div class="h"><b>No ruler-and-compass construction</b></div>
+<p>Already for a generic three-point <i>M</i> in the plane a minimizer cannot be constructed with ruler and compass: for a large angle and a suitable <i>r</i> the problem coincides with Alhazen’s billiard problem (reflection in a spherical mirror), whose unconstructability was shown by Neumann (1998). For Steiner trees such a construction exists (Melzak).</p></div>
+
+<h2>Length bounds</h2>
+<div class="res ct"><div class="h"><b>Lower bounds</b> (Basok–Cherkashin–Teplitskaya, 2022) <a class="src" href="https://arxiv.org/abs/2212.01903">arXiv:2212.01903</a></div>
+<p>For any <i>M</i> ⊂ ℝ<sup><i>d</i></sup> the length of an <i>r</i>-minimizer is at least</p>
+<span class="eq">max <span style="font-size:1.3em">(</span>0, <span class="fr"><span>ℋ<sup><i>d</i></sup>(<i>M</i>) − ω<sub><i>d</i></sub><i>r</i><sup><i>d</i></sup></span><span>ω<sub><i>d</i>−1</sub><i>r</i><sup><i>d</i>−1</sup></span></span><span style="font-size:1.3em">)</span>,</span>
+<p>where ω<sub><i>k</i></sub> is the volume of the unit ball in ℝ<sup><i>k</i></sup>. If <i>M</i> is a planar convex set, then ℋ¹(Σ) ≥ (ℋ¹(∂<i>M</i>) − 2π<i>r</i>) / 2.</p></div>
+
+<h2>Penalized form and uniqueness</h2>
+<div class="res ct"><div class="h"><b>Penalized form</b> (Cherkashin–Teplitskaya, 2024) <a class="src" href="https://arxiv.org/abs/2212.05607">arXiv:2212.05607</a></div>
+<p>For any λ &gt; 1, minimizing <i>F</i><sub><i>M</i></sub>(Σ) + λ(ℋ¹(Σ) − <i>l</i>)<sub>+</sub> over connected compact sets is equivalent to the maximal distance minimizer problem. Solutions of the λ-penalized problem <i>F</i><sub><i>M</i></sub>(<i>S</i>) + λℋ¹(<i>S</i>) → min inherit all regularity properties of minimizers.</p></div>
+<div class="res ct"><div class="h"><b>Uniqueness</b> (Cherkashin–Teplitskaya, 2024) <a class="src" href="https://arxiv.org/abs/2212.05607">arXiv:2212.05607</a></div>
+<p>For a circle <i>M</i> = ∂<i>B</i><sub><i>R</i></sub> and <i>r</i> &lt; <i>R</i> the set of minimizers is uncountable (rotations). If <i>r</i> equals the radius of the smallest ball containing <i>M</i>, the solution is a unique point. For finite <i>M</i> and small <i>r</i> ambiguous configurations are rare: see <a href="#uniqueness">the corollary in the uniqueness article</a>.</p></div>
+
+<h2>Comparison with average distance minimizers</h2>
+<p>In the related problem one minimizes the integral ∫ <i>A</i>(dist(<i>y</i>, Σ)) dφ(<i>y</i>) instead of the maximum. Many properties are parallel: absence of loops, Ahlfors regularity, blow-up limits (a radius, a diameter, an angle of at least 2π/3, a regular tripod). In the plane an average distance minimizer is a finite union of simple curves (Buttazzo–Stepanov, 2003), and away from branching and corner points it is locally <i>C</i><sup>1</sup> (Lemenant, 2011).</p>
+</article>
+
+<article class="view" id="v-regularity" data-title="Regularity of minimizers">
+<h1>Regularity of maximal distance minimizers</h1>
+<p class="sub">What a minimizer looks like near each of its points</p>
+<figure><div id="f-types"></div><figcaption>All possible local pictures at a point <i>x</i> of a minimizer: a generic point with a tangent line; a leaf; a corner point (angle ≥ 2π/3); a branching point (three angles of 2π/3). A leaf and a corner point must be energetic.</figcaption></figure>
+<p>A ray (<i>ax</i>] is a <b>tangent ray</b> of a set Σ at <i>x</i> if there is a sequence <i>x</i><sub><i>k</i></sub> ∈ Σ \ {<i>x</i>}, <i>x</i><sub><i>k</i></sub> → <i>x</i>, with ∠<i>x</i><sub><i>k</i></sub><i>xa</i> → 0.</p>
+
+<h2>The plane</h2>
+<div class="res ct"><div class="h"><b>Theorem</b> (Teplitskaya, 2019) <a class="src" href="https://arxiv.org/abs/1910.07630">arXiv:1910.07630</a></div>
+<p>Let Σ be a maximal distance minimizer for a compact <i>M</i> ⊂ ℝ² and <i>r</i> &gt; 0. Then:</p>
+<ul><li>Σ is a union of a <b>finite number</b> of simple curves (injective images of a segment) having one-sided tangents at every point;</li>
+<li>the angle between any two tangent rays at any point is at least 2π/3;</li>
+<li>there are at most three tangent rays at a point; if there are three, then in some neighborhood of the point Σ coincides with a regular tripod.</li></ul>
+<p>Thus a planar minimizer is isotopic to a finite Steiner tree even for a “bad” compact <i>M</i>. This distinguishes it from a solution of the Steiner problem, which can have <a href="#infinite">infinitely many branching points</a>. The results also hold for local minimizers.</p></div>
+
+<h2>Euclidean space</h2>
+<div class="res ct"><div class="h"><b>Theorem</b> (Gordeev–Teplitskaya, Ann. Sc. Norm. Super. Pisa 2025) <a class="src" href="https://arxiv.org/abs/2207.13745">arXiv:2207.13745</a></div>
+<p>Let Σ be a (local) minimizer for a compact <i>M</i> ⊂ ℝ<sup><i>n</i></sup> and <i>r</i> &gt; 0. Then:</p>
+<ul><li>at every point of Σ there are at most three tangent rays, with pairwise angles at least 2π/3 (so they are coplanar);</li>
+<li>tangent rays coincide with one-sided tangents and correspond one-to-one to the connected components of Σ \ {<i>x</i>}; in particular the angle between one-sided tangents cannot be zero;</li>
+<li>a local minimizer contains no loops;</li>
+<li>for <i>n</i> = 2 the set Σ is a finite union of simple curves with one-sided tangents <b>continuous from the corresponding side</b>.</li></ul></div>
+<div class="res ct"><div class="h"><b>Sharp Ahlfors constants</b> (Gordeev–Teplitskaya, 2025) <a class="src" href="https://arxiv.org/abs/2207.13745">arXiv:2207.13745</a></div>
+<p>ℋ¹(Σ ∩ <i>B</i><sub><i>ε</i></sub>(<i>x</i>)) = ord<sub><i>x</i></sub>Σ · <i>ε</i> + <i>o</i>(<i>ε</i>), where ord<sub><i>x</i></sub>Σ ∈ {1, 2, 3} is the order of the point. In the plane these are the best possible constants; in ℝ<sup><i>n</i></sup> the result is “local” (<i>ε</i> depends on <i>x</i>).</p></div>
+<div class="res ct"><div class="h"><b>Continuity lemma</b> (Gordeev–Teplitskaya, 2025) <a class="src" href="https://arxiv.org/abs/2207.13745">arXiv:2207.13745</a></div>
+<p>Let Σ ⊂ ℝ² be a (local) minimizer and Σ<sub>1</sub> a component of Σ \ {<i>x</i>} with one-sided tangent (<i>ax</i>]. Then for points <i>x̄</i> ∈ Σ<sub>1</sub> any one-sided tangent at <i>x̄</i> makes an angle <i>o</i>(1) with the line (<i>ax</i>) as <i>x̄</i> → <i>x</i>.</p></div>
+
+<h2>How smooth the curves can be</h2>
+<div class="res ct"><div class="h"><b>Infinitely many corner points</b> (Basok–Cherkashin–Teplitskaya, 2022) <a class="src" href="https://arxiv.org/abs/2212.01903">arXiv:2212.01903</a></div>
+<p>There is a planar minimizer with infinitely many corner points. So the curves in the regularity theorem need not be <i>C</i><sup>1</sup>, and a minimizer cannot be represented as a finite union of smooth curves. The construction is in the article on the <a href="#inverse">inverse problem</a>.</p></div>
+<div class="res open"><div class="h"><b>Open for <i>d</i> ≥ 3</b></div>
+<p>Is a minimizer in ℝ<sup><i>d</i></sup> a finite union of simple curves? Is there a nonplanar minimizer with infinitely many branching points? Does the continuity lemma hold? See <a href="#open">open questions</a>.</p></div>
+</article>
+
+<article class="view" id="v-horseshoe" data-title="Horseshoe conjecture">
+<h1>Horseshoe conjecture</h1>
+<p class="sub">Minimizers for a circle and for convex curves</p>
+<p>Let <i>M</i> be a closed convex curve and <i>M</i><sub><i>r</i></sub> the inner part of the boundary of <i>B</i><sub><i>r</i></sub>(<i>M</i>), that is, the curve parallel to <i>M</i> at distance <i>r</i> inside. A <b>horseshoe</b> is the union of an arc of <i>M</i><sub><i>r</i></sub> and two segments tangent to <i>M</i><sub><i>r</i></sub> at the ends of the arc.</p>
+<figure><div id="f-hs"></div>
+<div class="ctl"><label for="hs">R / r</label><input type="range" id="hs" min="1.15" max="9" step="0.01" value="6"><output id="hs-out"></output></div>
+<figcaption>The horseshoe for a circle of radius <i>R</i>: an arc of the circle of radius <i>R</i> − <i>r</i> and two tangent segments. Both ends lie on the circle of radius <i>r</i> centered at a point <i>y</i> ∈ <i>M</i> (dashed). The light blue band is the <i>r</i>-neighborhood of Σ.</figcaption></figure>
+<div class="res open"><div class="h"><b>Conjecture</b> (Miranda–Paolini–Stepanov, 2006)</div>
+<p>For a circle of radius <i>R</i> &gt; <i>r</i> every minimizer is a horseshoe. Open for <i>r</i> &lt; <i>R</i> ≤ 4.98<i>r</i>.</p></div>
+
+<h2>Main theorem</h2>
+<div class="res ct"><div class="h"><b>Theorem</b> (Cherkashin–Teplitskaya, ESAIM: COCV 2018) <a class="src" href="https://arxiv.org/abs/1511.01026">arXiv:1511.01026</a></div>
+<p>Let <i>M</i> be a convex closed curve with radius of curvature at least 5<i>r</i> at every point. Then <b>every minimizer for <i>M</i> is a horseshoe</b>. If <i>M</i> is a circle of radius <i>R</i>, the condition <i>R</i> &gt; 4.98<i>r</i> suffices.</p>
+<p><b>Corollary (local minimizers).</b> Let the minimal radius of curvature be <i>R</i> &gt; 5<i>r</i>. If a local minimizer Σ̂ is not a horseshoe, then ℋ¹(Σ̂) − ℋ¹(Σ) ≥ (<i>R</i> − 5<i>r</i>)/2 for any global minimizer Σ.</p></div>
+<p>In the proof, the components of Σ outside the convex hull of <i>M</i><sub><i>r</i></sub> turn out to be locally minimal networks on at most 4 points; a case analysis of their combinatorial types and an estimate of the <i>turn</i> of the boundary finish the proof.</p>
+
+<h2>Structure for smooth convex curves</h2>
+<div class="res ct"><div class="h"><b>Theorem</b> (Cherkashin–Gordeev–Strukov–Teplitskaya, 2020) <a class="src" href="https://arxiv.org/abs/2011.10463">arXiv:2011.10463</a></div>
+<p>Let <i>M</i> be a convex closed curve with minimal radius of curvature greater than <i>r</i>. Then the closure of every connected component of <i>B</i><sub><i>r</i></sub>(<i>M</i>) ∩ Σ is a local Steiner tree connecting at most five vertices. The convex hull of such a component is a segment, a triangle or a quadrangle, and it has at most three “entering” points.</p></div>
+<div class="res ct"><div class="h"><b>“Derivation in the picture”</b> (Cherkashin–Gordeev–Strukov–Teplitskaya, 2020) <a class="src" href="https://arxiv.org/abs/2011.10463">arXiv:2011.10463</a></div>
+<p>Let <i>y</i> ∈ <i>M</i>, <i>B</i><sub><i>r</i></sub>(<i>y</i>) ∩ Σ = ∅, and let ∂<i>B</i><sub><i>r</i></sub>(<i>y</i>) contain energetic points <i>x</i><sub>1</sub>, <i>x</i><sub>2</sub>. Then (i) they lie on opposite sides of the line through <i>y</i> and the nearest point of <i>M</i><sub><i>r</i></sub>; (ii) the derivatives of the length of Σ near <i>x</i><sub>1</sub> and <i>x</i><sub>2</sub>, as <i>y</i> moves along <i>M</i>, are equal. The derivative is always nonnegative.</p>
+<p>The derivative Γ′(0) is computed in all four cases (<i>d</i> is the degree of the energetic point, <i>k</i> the number of points of <i>M</i> corresponding to it):</p>
+<div class="tw"><table>
+<tr><th><i>d</i></th><th><i>k</i></th><th>Γ′(0)</th></tr>
+<tr><td>1</td><td>1</td><td>cos α</td></tr>
+<tr><td>2</td><td>1</td><td>2 cos α cos β</td></tr>
+<tr><td>1</td><td>2</td><td>cos(α + δ) sin(α + β) / sin 2α</td></tr>
+<tr><td>2</td><td>2</td><td>cos(α + δ) (sin(α + β) + sin(α + γ)) / sin 2α</td></tr>
+</table></div>
+<p>Here α, β, γ, δ are angles between the edges of Σ, the segments [<i>xy</i>] and the curve <i>M</i> (precise definitions are in the paper). In addition, an isolated energetic point of degree 1 is collinear with its edge and the point <i>y</i>(<i>x</i>), and at a point of degree 2 the segment [<i>xy</i>(<i>x</i>)] bisects the angle.</p></div>
+
+<h2>The stadium: without a curvature assumption the statement fails</h2>
+<figure><div id="f-stad"></div><figcaption>Sketch (after Fig. 8 of the survey): a fragment of a long <i>R</i>-stadium with <i>R</i> &lt; 1.75<i>r</i>. The set Σ′ made of copies of the tree Σ<sub>0</sub> covers the straight part and, per unit length, is shorter than a horseshoe, which would run along both sides. Near the ends Σ′ looks different.</figcaption></figure>
+<div class="res ct"><div class="h"><b>Counterexample</b> (Cherkashin–Teplitskaya, 2018, 2024) <a class="src" href="https://arxiv.org/abs/2212.05607">arXiv:2212.05607</a></div>
+<p>A <b>stadium</b> is the boundary of the <i>R</i>-neighborhood of a segment; its minimal radius of curvature is <i>R</i>. If <i>R</i> &lt; 1.75<i>r</i> and the stadium is long enough, then no horseshoe is a minimizer: a connected set made of copies of a locally minimal tree Σ<sub>0</sub> has length α<i>L</i> + <i>O</i>(1) with α &lt; 2, whereas any horseshoe has length 2<i>L</i> + <i>O</i>(1).</p>
+<p>For <i>R</i> &gt; 5<i>r</i> every solution for a stadium is a horseshoe. Any minimizer for a stadium consists of segments and arcs of circles of radius <i>R</i> − <i>r</i>.</p></div>
+<div class="res open"><div class="h"><b>Open questions</b> (Teplitskaya, 2025–2026) <a class="src" href="https://arxiv.org/abs/2511.18217">arXiv:2511.18217</a></div>
+<ul><li>Find the minimizers for a circle with <i>r</i> &lt; <i>R</i> &lt; 4.98<i>r</i>.</li>
+<li>Describe the minimizers for an <i>R</i>-stadium with <i>r</i> &lt; <i>R</i> &lt; 5<i>r</i>.</li>
+<li>Find the supremum of <i>C</i> for which a <i>Cr</i>-stadium has a minimizer that is not a horseshoe, and the infimum of <i>c</i> for which every minimizer for any curve with minimal radius of curvature <i>cr</i> is a horseshoe.</li>
+<li>For two parallel segments of length <i>l</i> at distance <i>a</i> &gt; 2<i>r</i> find <i>s</i>(<i>a</i>) = lim ℋ¹(Σ(<i>l</i>))/<i>l</i>. It is known that <i>s</i>(<i>a</i>) = 2 for <i>a</i> &gt; 10<i>r</i>.</li></ul></div>
+</article>
+
+<article class="view" id="v-rectangle" data-title="Minimizer for a rectangle">
+<h1>Minimizer for a rectangle</h1>
+<p class="sub">An explicit solution for the boundary of a rectangle and small <i>r</i></p>
+<figure><div id="f-rect"></div><figcaption>Sketch of the minimizer for a rectangle <i>A</i><sub>1</sub><i>A</i><sub>2</sub><i>A</i><sub>3</sub><i>A</i><sub>4</sub> with <i>r</i> &lt; <i>r</i><sub>0</sub>(<i>M</i>) (after the figure in the paper; <i>r</i> is enlarged). Right: a neighborhood of the vertex <i>A</i><sub>1</sub>. The angles at the Steiner point are 2π/3, at the corner points about 11π/12, and the “whisker” towards the vertex has a kink of about 0.98π.</figcaption></figure>
+<div class="res ct"><div class="h"><b>Theorem</b> (Cherkashin–Gordeev–Strukov–Teplitskaya, 2021) <a class="src" href="https://arxiv.org/abs/2106.00809">arXiv:2106.00809</a></div>
+<p>Let <i>M</i> = <i>A</i><sub>1</sub><i>A</i><sub>2</sub><i>A</i><sub>3</sub><i>A</i><sub>4</sub> be a rectangle. There is <i>r</i><sub>0</sub>(<i>M</i>) &gt; 0 such that for 0 &lt; <i>r</i> &lt; <i>r</i><sub>0</sub>(<i>M</i>) every maximal distance minimizer has the same topology of <b>21 segments</b>, shown in the figure.</p>
+<p>The length of any minimizer is Per(<i>M</i>) − <i>c</i>·<i>r</i> + <i>o</i>(<i>r</i>), where Per(<i>M</i>) is the perimeter and <i>c</i> ≈ 8.473981.</p>
+<p>Every minimizer is close, in the Hausdorff distance, to the one depicted.</p></div>
+<p>The solution is surprisingly asymmetric: three sides are followed entirely, while the fourth has a gap. Where the 21 comes from: 4 segments at each vertex (two links of the whisker and two arms of the Steiner point), three segments along sides, and two slanted segments at the side with the gap.</p>
+<p>The proof makes heavy use of <a href="#horseshoe">derivation in the picture</a> for a piecewise smooth curve and of the <a href="#regularity">regularity</a> results.</p>
+<div class="res ct"><div class="h"><b>Remark on narrow rectangles</b> (Cherkashin–Teplitskaya, 2024) <a class="src" href="https://arxiv.org/abs/2212.05607">arXiv:2212.05607</a></div>
+<p>The condition <i>r</i> &lt; <i>r</i><sub>0</sub>(<i>M</i>) matters: for a narrow enough rectangle and some <i>r</i> a minimizer has a different topology (by analogy with the <a href="#horseshoe">stadium</a>).</p></div>
+<div class="res open"><div class="h"><b>Open</b> (Teplitskaya, 2025) <a class="src" href="https://arxiv.org/abs/2511.18217">arXiv:2511.18217</a></div>
+<p>Find the minimizers for regular <i>n</i>-gons. Presumably for <i>n</i> ≥ 6 it is just a polyline; the question is interesting already for <i>n</i> = 3. Regularity only implies that a solution is a finite union of segments with angles at least 2π/3. For a disc or ball <i>B</i><sub><i>R</i></sub> nothing is known beyond the general properties.</p></div>
+</article>
+
+<article class="view" id="v-inverse" data-title="Inverse problem">
+<h1>Inverse problem for minimizers</h1>
+<p class="sub">Which connected sets are minimizers for some <i>M</i> and <i>r</i></p>
+<p>The <b>inverse problem</b>: given a connected compact set Σ, decide whether it is a maximal distance minimizer for some compact <i>M</i> and some <i>r</i> &gt; 0. All results in this article are from the paper of Basok, Cherkashin and Teplitskaya (<a href="https://arxiv.org/abs/2212.01903">arXiv:2212.01903</a>).</p>
+
+<h2>Steiner trees as minimizers</h2>
+<div class="res ct"><div class="h"><b>Theorem</b> (Basok–Cherkashin–Teplitskaya, 2022) <a class="src" href="https://arxiv.org/abs/2212.01903">arXiv:2212.01903</a></div>
+<p>Let St be a Steiner tree for terminals <i>A</i> = (<i>a</i><sub>1</sub>, …, <i>a</i><sub><i>n</i></sub>) in ℝ<sup><i>d</i></sup>, and suppose that for some <i>r</i> &gt; 0 every Steiner tree for every <i>n</i>-tuple in the closed 2<i>r</i>-neighborhood of <i>A</i> (in the Chebyshev distance) has the same topology. Then St is an <i>r</i>-minimizer for some <i>n</i>-point set <i>M</i>.</p>
+<p>In particular, a Steiner tree that is unique for its terminals is a minimizer for some <i>n</i>-point <i>M</i> and small enough <i>r</i>.</p></div>
+<div class="res ct"><div class="h"><b>Proposition</b> (Basok–Cherkashin–Teplitskaya, 2022) <a class="src" href="https://arxiv.org/abs/2212.01903">arXiv:2212.01903</a></div>
+<p>Let St be a full Steiner tree for <i>a</i><sub>1</sub>, …, <i>a</i><sub><i>n</i></sub> ∈ ℝ<sup><i>d</i></sup>, and let <i>q</i> be the smallest distance from a terminal to its adjacent branching point. If <i>r</i> &lt; <i>q</i>, then St \ ∪<i>B</i><sub><i>r</i></sub>(<i>a</i><sub><i>i</i></sub>) is an <i>r</i>-minimizer for <i>M</i> = {<i>a</i><sub>1</sub>, …, <i>a</i><sub><i>n</i></sub>}. (This is exactly the figure in the article on <a href="#mdm">minimizers</a>.)</p></div>
+<figure class="r"><div id="f-square2"></div><figcaption>Two Steiner trees for a square. A full non-unique tree cannot be a minimizer for any four-point set.</figcaption></figure>
+<div class="res ct"><div class="h"><b>Corollary (a converse in the plane)</b> (Basok–Cherkashin–Teplitskaya, 2022) <a class="src" href="https://arxiv.org/abs/2212.01903">arXiv:2212.01903</a></div>
+<p>If St is a full Steiner tree for <i>a</i><sub>1</sub>, …, <i>a</i><sub><i>n</i></sub> ∈ ℝ² and it is not unique, then St is not a minimizer for any <i>n</i>-point set <i>M</i>. The simplest example is the tree for the vertices of a square (<i>n</i> = 4). The proof relies on <a href="#uniqueness">Oblakov’s theorem</a>.</p></div>
+<p><b>Convexity argument.</b> Fix a topology and choose one point in each ball <i>B</i><sub><i>r</i></sub>(<i>m</i>), connecting them according to this topology. The length is a convex function on a convex set, so local minima are global. The proofs of the theorems in this section rest on this.</p>
+<div class="clear"></div>
+
+<h2>A polyline with infinitely many corners</h2>
+<figure><div id="f-corner"></div><figcaption>Sketch (not to scale): points <i>a</i><sub><i>i</i></sub> on a circle, each next link half as long; <i>v</i><sub><i>i</i></sub> ∈ <i>M</i> lies at distance <i>r</i> from <i>a</i><sub><i>i</i></sub> on the outer bisector.</figcaption></figure>
+<div class="res ct"><div class="h"><b>Theorem</b> (Basok–Cherkashin–Teplitskaya, 2022) <a class="src" href="https://arxiv.org/abs/2212.01903">arXiv:2212.01903</a></div>
+<p>Let points <i>a</i><sub>1</sub>, <i>a</i><sub>2</sub>, … lie on a circle ∂<i>B</i><sub><i>R</i></sub>(<i>o</i>), with <i>N</i>·|<i>a</i><sub>1</sub><i>a</i><sub>2</sub>| = <i>r</i> for a large enough <i>N</i>, |<i>a</i><sub><i>i</i>+1</sub><i>a</i><sub><i>i</i>+2</sub>| = |<i>a</i><sub><i>i</i></sub><i>a</i><sub><i>i</i>+1</sub>|/2, let <i>a</i><sub>∞</sub> be the limit point, and let <i>a</i><sub>∞+1</sub> lie on the tangent line at <i>a</i><sub>∞</sub> at distance <i>r</i>/<i>N</i>. Then the polyline Σ = ∪[<i>a</i><sub><i>i</i></sub><i>a</i><sub><i>i</i>+1</sub>] is the <b>unique</b> minimizer for the compact set <i>M</i> = {<i>v</i><sub><i>i</i></sub>}, where <i>v</i><sub><i>i</i></sub> is the point at distance <i>r</i> from <i>a</i><sub><i>i</i></sub> with ∠<i>a</i><sub><i>i</i>−1</sub><i>a</i><sub><i>i</i></sub><i>v</i><sub><i>i</i></sub> = ∠<i>a</i><sub><i>i</i>+1</sub><i>a</i><sub><i>i</i></sub><i>v</i><sub><i>i</i></sub>.</p>
+<p>This minimizer has infinitely many corner points, that is, points without a tangent line.</p></div>
+
+<h2>Smooth curves</h2>
+<figure class="r"><div id="f-c11"></div><figcaption><i>M</i> is the closed <i>r</i>-neighborhood of a smooth curve Σ; for small <i>r</i> the curve Σ is a minimizer for <i>M</i>.</figcaption></figure>
+<div class="res ct"><div class="h"><b>Theorem</b> (Basok–Cherkashin–Teplitskaya, 2022) <a class="src" href="https://arxiv.org/abs/2212.01903">arXiv:2212.01903</a></div>
+<p>Every simple <i>C</i><sup>1,1</sup>-curve γ ⊂ ℝ<sup><i>d</i></sup> is a maximal distance minimizer for <i>M</i> = <span style="text-decoration:overline"><i>B</i><sub><i>r</i></sub>(γ)</span> and small enough <i>r</i>. The reason: for such a curve the volume lower bound on the length (see <a href="#mdm">length bounds</a>) is sharp.</p></div>
+<div class="res ct"><div class="h"><b>Tilli’s theorem generalized to ℝ<sup><i>d</i></sup></b> (Basok–Cherkashin–Teplitskaya, 2022) <a class="src" href="https://arxiv.org/abs/2212.01903">arXiv:2212.01903</a></div>
+<p>For a rectifiable curve γ ⊂ ℝ<sup><i>d</i></sup> and <i>R</i> &gt; 0 the following are equivalent: (i) ℋ<sup><i>d</i></sup>(<i>B</i><sub><i>R</i></sub>(γ)) = ℋ¹(γ)ω<sub><i>d</i>−1</sub><i>R</i><sup><i>d</i>−1</sup> + ω<sub><i>d</i></sub><i>R</i><sup><i>d</i></sup>; (ii) every point of <i>B</i><sub><i>R</i></sub>(γ) has a unique nearest point on γ; (iii) the same holds and the radius of curvature of γ is at least <i>R</i>.</p>
+<p>A curve satisfying (ii) (for example, of length at most π<i>R</i> with radius of curvature at least <i>R</i>, or any simple <i>C</i><sup>1,1</sup>-curve for small <i>R</i>) is an <b>average distance minimizer</b> for Ω = <i>B</i><sub><i>R</i></sub>(γ). The planar case is Tilli’s theorem (2010).</p></div>
+<div class="clear"></div>
+<div class="res open"><div class="h"><b>Open</b></div>
+<p>Let Σ be an <i>r</i>-minimizer for some <i>M</i>. Is it the unique <i>r</i>-minimizer for the closure of <i>B</i><sub><i>r</i></sub>(Σ)? Does the set of energetic points determine the minimizer? Is there an analogue of the converse statement for <i>d</i> &gt; 2 and for non-full trees?</p></div>
+</article>
+
+<article class="view" id="v-open" data-title="Open questions">
+<h1>Open questions</h1>
+<p class="sub">From the surveys of Cherkashin–Teplitskaya (2024), Teplitskaya (2025) and the MDS 2026 problem collection</p>
+<p>Sources: <a href="https://arxiv.org/abs/2212.05607">arXiv:2212.05607</a>, <a href="https://arxiv.org/abs/2511.18217">arXiv:2511.18217</a> (21 questions), <a href="https://arxiv.org/abs/2611.03403">arXiv:2611.03403</a>, <a href="https://arxiv.org/abs/2602.11294">arXiv:2602.11294</a>.</p>
+
+<h2>Minimizers: explicit examples</h2>
+<div class="res open"><div class="h"><b>Circle and stadium</b></div><p>Minimizers for a circle with <i>r</i> &lt; <i>R</i> &lt; 4.98<i>r</i>; for an <i>R</i>-stadium with <i>r</i> &lt; <i>R</i> &lt; 5<i>r</i>; the sharp threshold constants. See the <a href="#horseshoe">horseshoe conjecture</a>.</p></div>
+<div class="res open"><div class="h"><b>Any explicit set</b></div><p>A disc or ball <i>B</i><sub><i>R</i></sub> ⊂ ℝ<sup><i>d</i></sup> (nothing is known beyond general properties); regular <i>n</i>-gons (already <i>n</i> = 3); the <a href="#rectangle">rectangle</a> for <i>r</i> that is not small.</p></div>
+
+<h2>Minimizers: regularity and uniqueness</h2>
+<div class="res open"><div class="h"><b>Finiteness in ℝ<sup><i>d</i></sup></b></div><p>Is a minimizer in ℝ<sup><i>d</i></sup>, <i>d</i> ≥ 3, a union of finitely many injective curves? Is there a nonplanar minimizer with infinitely many branching points?</p></div>
+<div class="res open"><div class="h"><b>Universal Ahlfors regularity</b></div><p>Are there constants <i>C</i><sub>1</sub>, <i>C</i><sub>2</sub> depending only on <i>d</i> such that <i>C</i><sub>1</sub><i>ε</i> ≤ ℋ¹(Σ ∩ <i>B</i><sub><i>ε</i></sub>(<i>x</i>)) ≤ <i>C</i><sub>2</sub><i>ε</i> for all small <i>ε</i>?</p></div>
+<div class="res open"><div class="h"><b>Nonplanar branching</b></div><p>Construct a minimizer with a branching point <i>x</i> no neighborhood of which in Σ lies in a plane. Does the continuity lemma for one-sided tangents hold in ℝ<sup><i>d</i></sup>?</p></div>
+<div class="res open"><div class="h"><b>Uniqueness for the own neighborhood</b></div><p>If Σ is an <i>r</i>-minimizer for some <i>M</i>, is it the unique <i>r</i>-minimizer for the closure of <i>B</i><sub><i>r</i></sub>(Σ)? Does the set <i>G</i><sub>Σ</sub> of energetic points determine the minimizer?</p></div>
+<div class="res open"><div class="h"><b>Ambiguous configurations in ℝ<sup><i>d</i></sup></b></div><p>Find the Hausdorff dimension of the set of <i>n</i>-point ambiguous <i>M</i> ⊂ ℝ<sup><i>d</i></sup> for <i>d</i> ≥ 3, <i>n</i> ≥ 4; at least prove that it has measure zero.</p></div>
+<div class="res open"><div class="h"><b>Algebraic complexity</b></div><p>For a finite <i>M</i> ⊂ ℝ² of <i>n</i> points with rational coordinates: what is the largest degree of the extension of ℚ generated by the energetic points? Open already for <i>n</i> = 4. (For three points Alhazen’s problem arises, a quartic equation.)</p></div>
+<div class="res open"><div class="h"><b>Steiner trees as minimizers</b></div><p>Let a totally disconnected compact <i>A</i> ⊂ ℝ<sup><i>d</i></sup> have at least two Steiner trees <i>S</i> and <i>T</i>. Can <i>S</i> be a maximal distance minimizer? For <i>d</i> = 2 the answer is negative if <i>S</i> or <i>T</i> is full.</p></div>
+
+<h2>Steiner trees</h2>
+<div class="res open"><div class="h"><b>Oblakov’s theorem in ℝ<sup><i>d</i></sup></b></div><p>Is there a finite set of terminals in ℝ<sup><i>d</i></sup>, <i>d</i> ≥ 3, with two different Steiner trees that coincide near the terminals?</p></div>
+<div class="res open"><div class="h"><b>Uniqueness and existence</b></div><p>Is the solution unique for a generic input (beyond the finite planar case)? Is there a bounded non-closed <i>A</i> ⊂ ℝ<sup><i>d</i></sup> for which the problem has no solution (a question of E. Paolini)?</p></div>
+<div class="res open"><div class="h"><b>Steiner ratio</b></div><p>The Gilbert–Pollak conjecture in the plane (Graham’s $1000 prize), the value in ℝ³ ($500), and higher dimensions.</p></div>
+<div class="res open"><div class="h"><b>Density in a ball without terminals</b> (questions of G. David)</div><p>What is the largest number of points of ∂<i>B</i><sub><i>tr</i></sub>(<i>x</i>) ∩ St and the largest number of branchings in <i>B</i><sub><i>tr</i></sub>(<i>x</i>) for <i>t</i> ∈ (0, 1)? For <i>t</i> = 1/2 in the plane M. Khristoforov gave an example with 6 points; it is unknown whether this is the maximum. How do the bounds (144<i>d</i>/(1 − ρ))<sup><i>d</i>−2</sup> and (144<i>d</i>/(1 − ρ))<sup><i>d</i>−1</sup> from the <a href="#ahlfors">regularity theorem</a> behave in <i>d</i> and 1 − ρ?</p></div>
+<div class="res open"><div class="h"><b>Random and extremal sets</b></div><p>Does the length of a Steiner tree for <i>N</i> random points have asymptotics β<i>N</i><sup>(<i>d</i>−1)/<i>d</i></sup>? Can the constant be separated from those for the spanning tree, the rectilinear Steiner problem and the travelling salesman? Let <i>L</i><sub>Ω</sub>(<i>n</i>) be the largest length of a Steiner tree for <i>n</i> points of a planar domain Ω; the hexagonal lattice gives lim <i>L</i><sub>Ω</sub>(<i>n</i>)/√(<i>n</i>·ℋ²(Ω)) ≥ (4/3)<sup>1/4</sup> = 1.07… Is it true that <i>n</i> points in a rectangle √3 × (<i>n</i> − 1) can always be connected by a set of length at most √3(<i>n</i> − 1) + <i>o</i>(1)?</p></div>
+<div class="res open"><div class="h"><b>Number of simultaneously optimal topologies</b></div><p>How many full topologies can give a shortest solution simultaneously? In all known examples at most exponentially many in <i>n</i>, while the number of topologies grows factorially.</p></div>
+<div class="res open"><div class="h"><b>Nonplanar examples</b></div><p>Describe the Steiner tree for the union of homothetic copies of the vertices of a regular <i>n</i>-gon in ℝ³. Construct a nonplanar unique full Steiner tree with infinitely many branchings. Is the self-similar binary tree unique whenever the ratios are uniformly bounded?</p></div>
+
+<h2>Related problems</h2>
+<div class="res open"><div class="h"><b>Gilbert–Steiner</b></div><p>Bounds on the branching degree for large <i>d</i> and <i>p</i> &gt; 1/2: see the <a href="#gilbert">Gilbert–Steiner problem</a>. Quantitative regularity of branched transport.</p></div>
+<div class="res open"><div class="h"><b>Other problems from the MDS 2026 collection</b> <a class="src" href="https://arxiv.org/abs/2611.03403">arXiv:2611.03403</a></div><p>Is the length of a typical trajectory of an optimal branched traffic plan bounded (A. Prouff); the Bollobás–Meir constant for tours in the three-dimensional cube (A. Gordeev); tropical caustics without convexity (M. Shkolnikov).</p></div>
+</article>
+
+<article class="view" id="v-papers" data-title="Papers and authors">
+<h1>Papers and authors</h1>
+<p class="sub">Papers by Danila Cherkashin and Yana Teplitskaya on Steiner trees and maximal distance minimizers</p>
+<p>The list was compiled from the authors’ arXiv listings (checked on 20 November 2026) and from the bibliographies of the papers. For each paper the table says where its results appear in this reference.</p>
+<div class="tw"><table>
+<tr><th>Year</th><th>Authors and title</th><th>Publication</th><th>Covered in</th></tr>
+<tr><td>2015</td><td>E. Paolini, E. Stepanov, Y. Teplitskaya. An example of an infinite Steiner tree connecting an uncountable set</td><td>Adv. Calc. Var. 8(3), 267–290</td><td><a href="#infinite">Infinite trees</a></td></tr>
+<tr><td>2018</td><td>D. Cherkashin, Y. Teplitskaya. On the horseshoe conjecture for maximal distance minimizers</td><td>ESAIM: COCV 24(3), 1015–1041; <a href="https://arxiv.org/abs/1511.01026">arXiv:1511.01026</a></td><td><a href="#horseshoe">Horseshoe</a></td></tr>
+<tr><td>2019</td><td>Y. Teplitskaya. On regularity of maximal distance minimizers</td><td><a href="https://arxiv.org/abs/1910.07630">arXiv:1910.07630</a></td><td><a href="#regularity">Regularity</a></td></tr>
+<tr><td>2020</td><td>D. Cherkashin, A. Gordeev, G. Strukov, Y. Teplitskaya. On minimizers of the maximal distance functional for a planar convex closed smooth curve</td><td><a href="https://arxiv.org/abs/2011.10463">arXiv:2011.10463</a></td><td><a href="#horseshoe">Horseshoe</a></td></tr>
+<tr><td>2021</td><td>D. Cherkashin, A. Gordeev, G. Strukov, Y. Teplitskaya. Maximal distance minimizers for a rectangle</td><td><a href="https://arxiv.org/abs/2106.00809">arXiv:2106.00809</a></td><td><a href="#rectangle">Rectangle</a></td></tr>
+<tr><td>2022</td><td>M. Basok, D. Cherkashin, Y. Teplitskaya. Inverse maximal and average distance minimizer problems</td><td><a href="https://arxiv.org/abs/2212.01903">arXiv:2212.01903</a></td><td><a href="#inverse">Inverse problem</a>, <a href="#mdm">minimizers</a></td></tr>
+<tr><td>2023</td><td>D. Cherkashin, Y. Teplitskaya. A self-similar infinite binary tree is a solution to the Steiner problem</td><td>Fractal Fract. 7(5), 414; <a href="https://arxiv.org/abs/2302.02189">arXiv:2302.02189</a></td><td><a href="#infinite">Infinite trees</a></td></tr>
+<tr><td>2024</td><td>M. Basok, D. Cherkashin, N. Rastegaev, Y. Teplitskaya. On uniqueness in Steiner problem</td><td>IMRN 2024(10), 8819–8838; <a href="https://arxiv.org/abs/1809.01463">arXiv:1809.01463</a></td><td><a href="#uniqueness">Uniqueness</a></td></tr>
+<tr><td>2024</td><td>D. Cherkashin, Y. Teplitskaya. An overview of maximal distance minimizers problem</td><td>Serdica J. Comput. 18(2), 125–155; <a href="https://arxiv.org/abs/2212.05607">arXiv:2212.05607</a></td><td><a href="#mdm">Minimizers</a>, <a href="#open">questions</a></td></tr>
+<tr><td>2025</td><td>A. Gordeev, Y. Teplitskaya. On regularity of maximal distance minimizers in ℝ<sup>n</sup></td><td>Ann. Sc. Norm. Super. Pisa 26(3), 1639–1663; <a href="https://arxiv.org/abs/2207.13745">arXiv:2207.13745</a></td><td><a href="#regularity">Regularity</a></td></tr>
+<tr><td>2025</td><td>D. Cherkashin, F. Petrov. Branching points in the planar Gilbert–Steiner problem have degree 3</td><td>Pure Appl. Funct. Anal. 10, 331–338; <a href="https://arxiv.org/abs/2309.04202">arXiv:2309.04202</a></td><td><a href="#gilbert">Gilbert–Steiner</a></td></tr>
+<tr><td>2025</td><td>D. Cherkashin, E. Paolini, Y. Teplitskaya. Steiner trees with infinitely many terminals on the sides of an angle</td><td>J. Comb. Optim. 49(3); <a href="https://arxiv.org/abs/2404.11546">arXiv:2404.11546</a></td><td><a href="#infinite">Infinite trees</a></td></tr>
+<tr><td>2025</td><td>D. Cherkashin. On branching points in the Gilbert–Steiner problem</td><td>to appear in J. Convex Anal.; <a href="https://arxiv.org/abs/2507.13532">arXiv:2507.13532</a></td><td><a href="#gilbert">Gilbert–Steiner</a></td></tr>
+<tr><td>2025</td><td>Y. Teplitskaya. Open problems on Steiner trees and maximal distance minimizers</td><td><a href="https://arxiv.org/abs/2511.18217">arXiv:2511.18217</a></td><td><a href="#open">Open questions</a></td></tr>
+<tr><td>2026</td><td>D. Cherkashin, P. Prozorov, Y. Teplitskaya. Universal Ahlfors–David regularity of Steiner trees</td><td><a href="https://arxiv.org/abs/2602.11294">arXiv:2602.11294</a></td><td><a href="#ahlfors">Ahlfors–David</a></td></tr>
+<tr><td>2026</td><td>D. Cherkashin. A short proof of Oblakov’s theorem</td><td><a href="https://arxiv.org/abs/2608.22585">arXiv:2608.22585</a></td><td><a href="#uniqueness">Uniqueness</a></td></tr>
+<tr><td>2026</td><td>Y. Teplitskaya (ed.). Open problems from the Length Optimization event at MDS 2026</td><td><a href="https://arxiv.org/abs/2611.03403">arXiv:2611.03403</a></td><td><a href="#open">Open questions</a>, <a href="#gilbert">Gilbert–Steiner</a></td></tr>
+</table></div>
+
+<h2>Index of results</h2>
+<p>All statements in this reference due to Cherkashin and Teplitskaya (with coauthors). Select one to jump to it.</p>
+<ol class="idx" id="idx"></ol>
+
+<h2>Related papers by the same authors</h2>
+<ul>
+<li>E. Stepanov, Y. Teplitskaya. Self-contracted curves have finite length (<a href="https://arxiv.org/abs/1707.04922">arXiv:1707.04922</a>): a self-contracted curve with bounded trace in a finite-dimensional normed space is rectifiable.</li>
+<li>C. Labourie, Y. Teplitskaya. Optimal regularity for quasiminimal sets of codimension one in ℝ² and ℝ³ (<a href="https://arxiv.org/abs/2411.07210">arXiv:2411.07210</a>).</li>
+</ul>
+
+<h2>Other main sources</h2>
+<ul>
+<li>E. Gilbert, H. Pollak. Steiner minimal trees. SIAM J. Appl. Math. 16 (1968).</li>
+<li>Z. Melzak. On the problem of Steiner. Canad. Math. Bull. 4 (1961).</li>
+<li>M. Garey, R. Graham, D. Johnson. The complexity of computing Steiner minimal trees. SIAM J. Appl. Math. 32 (1977).</li>
+<li>K. Oblakov. Non-existence of distinct codirected locally minimal trees on a plane. Moscow Univ. Math. Bull. 64 (2009).</li>
+<li>E. Paolini, E. Stepanov. Qualitative properties of maximum distance minimizers and average distance minimizers in ℝ<sup>n</sup>. J. Math. Sci. 122 (2004).</li>
+<li>M. Miranda, E. Paolini, E. Stepanov. On one-dimensional continua uniformly approximating planar sets. Calc. Var. PDE 27 (2006).</li>
+<li>E. Paolini, E. Stepanov. Existence and regularity results for the Steiner problem. Calc. Var. PDE 46 (2013).</li>
+<li>P. Tilli. Some explicit examples of minimizers for the irrigation problem. J. Convex Anal. 17 (2010).</li>
+<li>A. Lemenant. A presentation of the average distance minimizing problem. J. Math. Sci. 181 (2012).</li>
+</ul>
+</article>
+
+</main>
+</div>
+<script>
+(function(){
+"use strict";
+var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var f=function(x){return (Math.round(x*100)/100).toString()};
+var ru=function(x,n){return x.toFixed(n==null?2:n)};
+function svg(w,h,body){return '<svg viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg" role="img">'+body+'</svg>'}
+function ln(a,b,c){return '<line class="'+(c||'S')+'" x1="'+f(a[0])+'" y1="'+f(a[1])+'" x2="'+f(b[0])+'" y2="'+f(b[1])+'"/>'}
+function ci(p,r,c){return '<circle class="'+c+'" cx="'+f(p[0])+'" cy="'+f(p[1])+'" r="'+r+'"/>'}
+function tx(p,s,c,a){return '<text class="'+(c||'lb')+'" x="'+f(p[0])+'" y="'+f(p[1])+'"'+(a?' text-anchor="'+a+'"':'')+'>'+s+'</text>'}
+function pl(pts,c,extra){return '<polyline class="'+c+'" '+(extra||'')+' points="'+pts.map(function(p){return f(p[0])+','+f(p[1])}).join(' ')+'"/>'}
+var sub=function(a,b){return [a[0]-b[0],a[1]-b[1]]}, add=function(a,b){return [a[0]+b[0],a[1]+b[1]]}, mul=function(a,k){return [a[0]*k,a[1]*k]};
+var len=function(a){return Math.hypot(a[0],a[1])}, dist=function(a,b){return len(sub(a,b))}, unit=function(a){var l=len(a)||1;return [a[0]/l,a[1]/l]};
+var rot=function(a,t){var c=Math.cos(t),s=Math.sin(t);return [a[0]*c-a[1]*s,a[0]*s+a[1]*c]};
+function isect(p,d,q,e){var den=d[0]*e[1]-d[1]*e[0];var t=((q[0]-p[0])*e[1]-(q[1]-p[1])*e[0])/den;return add(p,mul(d,t))}
+function ang(a,b,c){var u=unit(sub(a,b)),v=unit(sub(c,b));return Math.acos(Math.max(-1,Math.min(1,u[0]*v[0]+u[1]*v[1])))}
+function apex(P,Q,O){var d1=add(P,rot(sub(Q,P),Math.PI/3)),d2=add(P,rot(sub(Q,P),-Math.PI/3));return dist(d1,O)>dist(d2,O)?d1:d2}
+
+/* ---------- three-point Steiner tree (interactive) ---------- */
+function triFig(){
+  var host=$('#f-tri'), W=360,H=270, P=[[55,225],[185,225],[120,112]], drag=-1;
+  host.innerHTML=svg(W,H,'<g id="tri-g"></g>'); var s=$('svg',host), g=$('#tri-g');
+  function draw(){
+    var A=P[0],B=P[1],C=P[2], out='', L, mel=$('#tri-melzak').checked;
+    var an=[ang(B,A,C),ang(A,B,C),ang(A,C,B)], big=-1;
+    for(var i=0;i<3;i++) if(an[i]>=2*Math.PI/3-1e-9) big=i;
+    var d=[dist(B,C),dist(A,C),dist(A,B)], mst=d[0]+d[1]+d[2]-Math.max(d[0],d[1],d[2]);
+    if(big>=0){ var v=P[big]; out+=ln(v,P[(big+1)%3])+ln(v,P[(big+2)%3]); L=dist(v,P[(big+1)%3])+dist(v,P[(big+2)%3]); }
+    else{
+      var D=apex(B,C,A), E=apex(C,A,B), F=isect(A,sub(D,A),B,sub(E,B));
+      if(mel){ var O=mul(add(add(B,C),D),1/3); out+=ci(O,f(dist(B,C)/Math.sqrt(3)),'dsh')+pl([B,D,C,B],'thin')+ln(F,D,'S2')+ci(D,3.5,'pt')+tx(add(D,[8,4]),'p','lbm'); }
+      out+=ln(A,F)+ln(B,F)+ln(C,F)+ci(F,4.5,'ps'); L=dist(A,F)+dist(B,F)+dist(C,F);
+    }
+    for(i=0;i<3;i++) out+=ci(P[i],8,'ph');
+    g.innerHTML=out;
+    $('#tri-out').textContent='length '+ru(L/100)+'; spanning tree '+ru(mst/100)+'; ratio '+ru(L/mst,3);
+  }
+  function pos(e){var m=s.getScreenCTM().inverse(), p=s.createSVGPoint(); p.x=e.clientX;p.y=e.clientY; p=p.matrixTransform(m); return [Math.max(10,Math.min(W-10,p.x)),Math.max(10,Math.min(H-10,p.y))]}
+  s.addEventListener('pointerdown',function(e){var p=pos(e),b=-1,bd=30; for(var i=0;i<3;i++){var q=dist(p,P[i]); if(q<bd){bd=q;b=i}} if(b>=0){drag=b; s.setPointerCapture(e.pointerId); e.preventDefault()}});
+  s.addEventListener('pointermove',function(e){if(drag>=0){P[drag]=pos(e);draw()}});
+  s.addEventListener('pointerup',function(){drag=-1}); s.addEventListener('pointercancel',function(){drag=-1});
+  $('#tri-melzak').addEventListener('change',draw); draw();
+}
+
+/* ---------- horseshoe for a circle ---------- */
+function horseshoe(hostId,sliderId,outId,W,H,R){
+  var host=$(hostId), sl=$(sliderId), out=$(outId);
+  function draw(){
+    var k=+sl.value, r=R/k, rho=R-r, c=[W/2,H/2+4], y=[c[0],c[1]-R];
+    var phi=Math.acos(rho/R), tl=Math.sqrt(R*R-rho*rho);
+    var t1=[c[0]+rho*Math.sin(phi),c[1]-rho*Math.cos(phi)], t2=[c[0]-rho*Math.sin(phi),t1[1]];
+    var e1=add(y,mul(unit(sub(t1,y)),r)), e2=add(y,mul(unit(sub(t2,y)),r));
+    var d='M'+f(e1[0])+' '+f(e1[1])+' L'+f(t1[0])+' '+f(t1[1])+' A'+f(rho)+' '+f(rho)+' 0 1 1 '+f(t2[0])+' '+f(t2[1])+' L'+f(e2[0])+' '+f(e2[1]);
+    var b='<path class="nb" stroke-width="'+f(2*r)+'" d="'+d+'"/>'+ci(c,R,'M')+ci(y,r,'dsh')+'<path class="S" d="'+d+'"/>'+ci(y,3.5,'pe')+ci(e1,3,'ps')+ci(e2,3,'ps')
+      +tx([y[0]+7,y[1]-7],'y','lbm')+tx([c[0]+R*0.74+6,c[1]+R*0.74+10],'M','lb')+tx([c[0]-rho*0.7+8,c[1]+rho*0.7-6],'Σ','lbn');
+    host.innerHTML=svg(W,H,b);
+    var L=(2*rho*(Math.PI-phi)+2*(tl-r))/r;
+    var st=k>4.98?'proved: all minimizers are horseshoes':'conjecture open';
+    out.textContent='R = '+ru(k)+' r; horseshoe length ≈ '+ru(L)+' r; '+st;
+  }
+  sl.addEventListener('input',draw); draw();
+}
+
+/* ---------- static figures ---------- */
+function localFig(){
+  var b='', c1=[55,60], c2=[150,60], c3=[250,60];
+  b+=ln(c1,[55,15])+ci(c1,5,'pt');
+  b+=ln(c2,add(c2,rot([0,-45],-1.15)))+ln(c2,add(c2,rot([0,-45],1.15)))+ci(c2,5,'pt');
+  for(var i=0;i<3;i++) b+=ln(c3,add(c3,rot([0,-42],i*2*Math.PI/3)));
+  b+=ci(c3,4.5,'ps')+tx([55,105],'degree 1','lbm','middle')+tx([150,105],'degree 2','lbm','middle')+tx([250,105],'120°','lbm','middle');
+  $('#f-local').innerHTML=svg(305,115,b);
+}
+function squareFig(id){
+  var a=120, o=[40,22], q=a/(2*Math.sqrt(3)), b='';
+  var V=[[0,0],[a,0],[a,a],[0,a]].map(function(p){return add(o,p)});
+  var s1=add(o,[q,a/2]), s2=add(o,[a-q,a/2]), u1=add(o,[a/2,q]), u2=add(o,[a/2,a-q]);
+  b+=ln(V[0],s1)+ln(V[3],s1)+ln(s1,s2)+ln(V[1],s2)+ln(V[2],s2)+ci(s1,4,'ps')+ci(s2,4,'ps');
+  b+=ln(V[0],u1,'S2')+ln(V[1],u1,'S2')+ln(u1,u2,'S2')+ln(V[2],u2,'S2')+ln(V[3],u2,'S2');
+  V.forEach(function(p){b+=ci(p,5,'pt')});
+  $(id).innerHTML=svg(200,165,b);
+}
+function clawFig(){
+  var b='', c=[70,48], d=[200,48];
+  [ -0.5, 0.5, 1.5 ].forEach(function(k,i){ b+=ln(c,add(c,rot([40,0],[ -Math.PI/3, 0, Math.PI/3 ][i]))) });
+  for(var i=0;i<3;i++) b+=ln(d,add(d,rot([40,0],i*2*Math.PI/3)));
+  b+=ci(c,4.5,'ps')+ci(d,4.5,'ps');
+  $('#f-claw').innerHTML=svg(270,96,b);
+}
+function binFig(){
+  var sl=$('#bin'), out=$('#bin-out');
+  function draw(){
+    var lam=+sl.value, segs=[], mn=[0,0], mx=[1,0];
+    (function rec(p,dir,l,dep){ var q=add(p,mul(dir,l)); segs.push([p,q,dep]); mn=[Math.min(mn[0],q[0]),Math.min(mn[1],q[1])]; mx=[Math.max(mx[0],q[0]),Math.max(mx[1],q[1])];
+      if(dep<9&&l*lam>0.002){ rec(q,rot(dir,Math.PI/3),l*lam,dep+1); rec(q,rot(dir,-Math.PI/3),l*lam,dep+1); } })([0,0],[1,0],1,0);
+    var W=640, pad=16, sc=(W-2*pad)/(mx[0]-mn[0]), H=Math.max(120,(mx[1]-mn[1])*sc+2*pad);
+    var T=function(p){return [pad+(p[0]-mn[0])*sc, H/2-p[1]*sc]};
+    var b=segs.map(function(s){return '<line class="S" style="stroke-width:'+f(Math.max(0.6,2.6-0.28*s[2]))+'" x1="'+f(T(s[0])[0])+'" y1="'+f(T(s[0])[1])+'" x2="'+f(T(s[1])[0])+'" y2="'+f(T(s[1])[1])+'"/>'}).join('');
+    b+=ci(T([0,0]),4.5,'pt')+tx(add(T([0,0]),[2,-9]),'y₀','lbm')+tx(add(T([1,0]),[-4,-9]),'y₁','lbm','end');
+    $('#f-bin').innerHTML=svg(W,H,b);
+    out.textContent='λ = '+ru(lam,3)+'; length = '+ru(1/(1-2*lam))+'; dim A∞ = '+ru(Math.log(2)/Math.log(1/lam),3);
+  }
+  sl.addEventListener('input',draw); draw();
+}
+function angleFig(){
+  var al=Math.PI/36, lam=0.5, W=720, H=150, ox=18, oy=75, sc=684;
+  var T=function(p){return [ox+p[0]*sc, oy-p[1]*sc]};
+  var A=function(k){return [Math.pow(lam,k-1)*Math.cos(al), Math.pow(lam,k-1)*Math.sin(al)]}, B=function(k){var a=A(k);return [a[0],-a[1]]};
+  var s1=[0.945976,-0.004502], s2=[0.514212,-0.014165], s3=[0.489103,0.027161];
+  var b=ln(T([0,0]),T(mul([Math.cos(al),Math.sin(al)],1.03)),'M')+ln(T([0,0]),T(mul([Math.cos(al),-Math.sin(al)],1.03)),'M');
+  for(var k=0;k<6;k++){ var m=Math.pow(lam,2*k), S=function(p){return T(mul(p,m))};
+    b+=ln(S(A(1)),S(s1))+ln(S(B(1)),S(s1))+ln(S(s1),S(s2))+ln(S(s2),S(B(2)))+ln(S(s2),S(s3))+ln(S(s3),S(A(2)))+ln(S(s3),S(A(3)));
+    if(k<2) b+=ci(S(s1),3,'ps')+ci(S(s2),3,'ps')+ci(S(s3),3,'ps'); }
+  for(k=1;k<=7;k++) b+=ci(T(A(k)),k<4?4:2.5,'pt')+ci(T(B(k)),k<4?4:2.5,'pt');
+  for(k=1;k<=3;k++) b+=tx(add(T(A(k)),[0,-9]),'A'+'₁₂₃'[k-1],'lbm','middle')+tx(add(T(B(k)),[0,19]),'B'+'₁₂₃'[k-1],'lbm','middle');
+  b+=tx([ox-2,oy-10],'A∞','lbm');
+  $('#f-angle').innerHTML=svg(W,H,b);
+}
+function ballFig(){
+  var c=[130,115], R=95, rho=0.6*R, b='';
+  b+=ci(c,R,'dsh')+'<circle cx="130" cy="115" r="'+rho+'" style="fill:var(--net);fill-opacity:.09;stroke:var(--net);stroke-width:1"/>';
+  var p0=[40,150], q1=[95,128], q2=[150,140], q3=[178,95];
+  b+=ln([20,160],q1)+ln(q1,[70,60])+ln(q1,q2)+ln(q2,[165,200])+ln(q2,q3)+ln(q3,[150,30])+ln(q3,[235,90]);
+  [q1,q2,q3].forEach(function(p){b+=ci(p,3.5,'ps')});
+  [[20,160],[70,60],[165,200],[150,30],[235,90]].forEach(function(p){b+=ci(p,2.5,'pt')});
+  b+=ci(c,2.5,'pt')+tx([c[0]+6,c[1]+4],'x','lbm')+tx([c[0]+R*0.72,c[1]+R*0.72+12],'s','lbm')+tx([c[0]-rho*0.72-16,c[1]+rho*0.72+10],'ρs','lbn');
+  $('#f-ball').innerHTML=svg(260,225,b);
+}
+function cocircFig(){
+  var c=[130,112], R=92, b=ci(c,R,'M');
+  var P=[30,150,210,330].map(function(d){var t=d*Math.PI/180;return [c[0]+R*Math.cos(t),c[1]-R*Math.sin(t)]});
+  var x=R/Math.sqrt(3), s1=[c[0]+x,c[1]], s2=[c[0]-x,c[1]];
+  b+=ln(P[0],s1)+ln(P[3],s1)+ln(s1,s2)+ln(P[1],s2)+ln(P[2],s2)+ci(s1,4,'ps')+ci(s2,4,'ps');
+  P.forEach(function(p){b+=ci(p,5,'pt')}); b+=tx([c[0]+R*0.6,c[1]+R*0.86+8],'ω','lb');
+  $('#f-cocirc').innerHTML=svg(260,225,b);
+}
+function gilFig(){
+  var sp=$('#gp'), sm=$('#gm'), out=$('#gil-out');
+  function draw(){
+    var p=+sp.value, mu=+sm.value, w1=Math.pow(mu,p), w2=Math.pow(1-mu,p);
+    var c1=Math.max(-1,Math.min(1,(1+w1*w1-w2*w2)/(2*w1))), c2=Math.max(-1,Math.min(1,(1+w2*w2-w1*w1)/(2*w2)));
+    var t1=Math.acos(c1), t2=Math.acos(c2), B=[230,125], S=[50,125];
+    var P1=add(B,[125*Math.cos(t1),-125*Math.sin(t1)]), P2=add(B,[125*Math.cos(t2),125*Math.sin(t2)]);
+    var w=function(x){return f(1.5+7*x)};
+    var b='<line class="S" style="stroke-width:'+w(1)+'" x1="'+S[0]+'" y1="'+S[1]+'" x2="'+B[0]+'" y2="'+B[1]+'"/>'
+      +'<line class="S" style="stroke-width:'+w(w1)+'" x1="'+B[0]+'" y1="'+B[1]+'" x2="'+f(P1[0])+'" y2="'+f(P1[1])+'"/>'
+      +'<line class="S" style="stroke-width:'+w(w2)+'" x1="'+B[0]+'" y1="'+B[1]+'" x2="'+f(P2[0])+'" y2="'+f(P2[1])+'"/>'
+      +ci(S,6,'pt')+ci(P1,5,'pt')+ci(P2,5,'pt')+ci(B,4,'ph')
+      +tx([S[0]-4,S[1]-12],'m₁ + m₂','lbm')+tx(add(P1,[8,-2]),'m₁ = '+ru(mu),'lbm')+tx(add(P2,[8,12]),'m₂ = '+ru(1-mu),'lbm');
+    $('#f-gil').innerHTML=svg(480,250,b);
+    out.textContent='p = '+ru(+p)+'; angle between branches '+ru((t1+t2)*180/Math.PI,1)+'°';
+  }
+  sp.addEventListener('input',draw); sm.addEventListener('input',draw); draw();
+}
+function mdm3Fig(){
+  var A=[62,52],B=[250,84],C=[120,222], r=30, b='';
+  var D=apex(B,C,A), E=apex(C,A,B), F=isect(A,sub(D,A),B,sub(E,B));
+  [A,B,C].forEach(function(p,i){ var e=add(p,mul(unit(sub(F,p)),r)); b+=ci(p,r,'dsh')+ln(e,F)+ci(e,3.2,'pe')+ci(p,4.5,'pt')+tx(add(p,[i==1?10:-16,i==2?18:-8]),'abc'[i],'lb'); });
+  b+=ci(F,4,'ps')+tx(add(F,[10,-8]),'Σ','lbn')+ln(C,add(C,[r,0]),'thin')+tx(add(C,[r/2,-5]),'r','lbm','middle');
+  $('#f-mdm3').innerHTML=svg(300,265,b);
+}
+function enFig(){
+  var x=[130,150], r=62, u=unit([0.25,-1]), y=add(x,mul(u,r)), b='';
+  var a1=add(x,rot(mul(u,-1),1.25*1)), d1=rot(u,Math.PI/2+0.35), d2=rot(u,-Math.PI/2-0.35);
+  b+=ci(y,r,'dsh')+ln(add(x,mul(d1,105)),x)+ln(x,add(x,mul(d2,105)))+ln(x,y,'thin')+ci(x,4.5,'pe')+ci(y,4.5,'pt')
+    +tx(add(x,[-4,20]),'x','lb')+tx(add(y,[8,-6]),'y ∈ M','lb')+tx(add(mul(add(x,y),0.5),[8,4]),'r','lbm')+tx([22,118],'Σ','lbn');
+  $('#f-en').innerHTML=svg(265,185,b);
+}
+function typesFig(){
+  var b='', w=150, lab=['generic point','leaf','corner point','branching'];
+  for(var i=0;i<4;i++){ var c=[w*i+w/2,62];
+    b+=ci(c,48,'dsh');
+    if(i==0) b+='<path class="S" d="M'+(c[0]-48)+' '+(c[1]+6)+' Q'+c[0]+' '+(c[1]-10)+' '+(c[0]+48)+' '+(c[1]+8)+'"/>'+ci([c[0],c[1]-1.5],4,'ps');
+    if(i==1) b+=ln([c[0]-48,c[1]],c)+ci(c,4.5,'pe');
+    if(i==2) b+=ln(add(c,rot([-48,0],0.42)),c)+ln(c,add(c,rot([48,0],-0.42)))+ci(c,4.5,'pe');
+    if(i==3){ for(var k=0;k<3;k++) b+=ln(c,add(c,rot([0,-48],k*2*Math.PI/3))); b+=ci(c,4.5,'ps'); }
+    b+=tx([c[0],132],lab[i],'lbm','middle')+tx([c[0]+9,c[1]-9],'x','lbm');
+  }
+  $('#f-types').innerHTML=svg(600,142,b);
+}
+function stadFig(){
+  var R=40, r=26, c=60, n=3, x0=70, yb=150, yt=yb-2*R, W=2*x0+2*c*n, b='', d='';
+  b+='<path class="M" d="M'+x0+' '+yt+' H'+(W-x0)+' A'+R+' '+R+' 0 0 1 '+(W-x0)+' '+yb+' H'+x0+' A'+R+' '+R+' 0 0 1 '+x0+' '+yt+'Z"/>';
+  d+='M'+(x0)+' '+(yb-22);
+  for(var i=0;i<n;i++){ var m=x0+c+2*c*i;
+    d+=' L'+f(m-10.4)+' '+(yb-22)+' L'+m+' '+(yb-28)+' L'+m+' '+(yb-54)+' L'+(m-37)+' '+f(yb-75.4)+' M'+m+' '+(yb-54)+' L'+(m+37)+' '+f(yb-75.4)+' M'+m+' '+(yb-28)+' L'+f(m+10.4)+' '+(yb-22)+' L'+(m+c)+' '+(yb-22);
+    b+=ci([m,yb-28],3,'ps')+ci([m,yb-54],3,'ps');
+  }
+  b='<path class="nb" stroke-width="'+2*r+'" d="'+d+'"/>'+b+'<path class="S" d="'+d+'"/>';
+  b+=tx([x0+c+8,yb-36],'Σ₀','lbn')+tx([W-x0+10,yt+16],'M','lb')+ci([x0+2*c,yb-22],3,'pt')+ci([x0+4*c,yb-22],3,'pt')+tx([x0+2*c,yb-27],'a','lbm','middle')+tx([x0+4*c,yb-27],'b','lbm','middle');
+  $('#f-stad').innerHTML=svg(W,205,b);
+}
+function rectFig(){
+  var b='';
+  function part(o,Wd,Hd,r,zoom){
+    var s=1.1*r, k=(s-r)/Math.tan(Math.PI/12), out='', PH={}, PV={};
+    [[0,Hd,1,-1,'bl'],[0,0,1,1,'tl'],[Wd,0,-1,1,'tr'],[Wd,Hd,-1,-1,'br']].forEach(function(q){
+      var c=[o[0]+q[0],o[1]+q[1]], sx=q[2], sy=q[3];
+      var S=[c[0]+sx*s,c[1]+sy*s], E=[c[0]+sx*r/Math.SQRT2*1.02,c[1]+sy*r/Math.SQRT2*0.98], K=[c[0]+sx*0.8*r,c[1]+sy*0.8*r];
+      var ph=[c[0]+sx*(s+k),c[1]+sy*r], pv=[c[0]+sx*r,c[1]+sy*(s+k)];
+      out+=pl([S,K,E],'S')+ln(S,ph)+ln(S,pv)+ci(S,zoom?4:2,'ps'); PH[q[4]]=ph; PV[q[4]]=pv;
+      if(zoom){ out+=ci(ph,3.5,'pe')+ci(pv,3.5,'pe')+ci(E,3.5,'pe')+ci(c,r,'dsh')+ln(c,E,'thin'); }
+    });
+    return {out:out,PH:PH,PV:PV};
+  }
+  var o=[34,26], Wd=330, Hd=180, r=17;
+  b+='<rect class="M" x="'+o[0]+'" y="'+o[1]+'" width="'+Wd+'" height="'+Hd+'"/>';
+  var p=part(o,Wd,Hd,r,false); b+=p.out;
+  b+=ln(p.PV.bl,p.PV.tl)+ln(p.PH.tl,p.PH.tr)+ln(p.PV.tr,p.PV.br);
+  var mid=o[0]+Wd/2, yb=o[1]+Hd;
+  b+=ln(p.PH.bl,[mid-0.95*r,yb-0.3*r])+ln(p.PH.br,[mid+0.95*r,yb-0.3*r]);
+  b+=tx([o[0]-6,yb+16],'A₁','lb','end')+tx([o[0]-6,o[1]-6],'A₂','lb','end')+tx([o[0]+Wd+6,o[1]-6],'A₃','lb')+tx([o[0]+Wd+6,yb+16],'A₄','lb');
+  // zoom of corner A1
+  var zo=[440,26], zr=92, zW=190, zH=180, zc=[zo[0],zo[1]+zH];
+  b+=pl([[zo[0],zo[1]],zc,[zo[0]+zW,zc[1]]],'M');
+  var s=1.1*zr, k=(s-zr)/Math.tan(Math.PI/12);
+  var S=[zc[0]+s,zc[1]-s], K=[zc[0]+0.8*zr,zc[1]-0.8*zr], E=[zc[0]+zr/Math.SQRT2*1.02,zc[1]-zr/Math.SQRT2*0.98], ph=[zc[0]+s+k,zc[1]-zr], pv=[zc[0]+zr,zc[1]-s-k];
+  b+='<path class="dsh" d="M'+(zc[0]+zr)+' '+zc[1]+' A'+zr+' '+zr+' 0 0 0 '+zc[0]+' '+(zc[1]-zr)+'"/>';
+  b+=pl([S,K,E],'S')+pl([[zo[0]+zW,zc[1]-zr],ph,S,pv,[zc[0]+zr,zo[1]]],'S')+ln(zc,E,'thin')+ci(S,4.5,'ps')+ci(ph,4,'pe')+ci(pv,4,'pe')+ci(E,4,'pe');
+  b+=tx([zc[0]-6,zc[1]+16],'A₁','lb','end')+tx([zc[0]+26,zc[1]-34],'r','lbm')+tx(add(S,[10,-8]),'2π/3','lbm')+tx(add(ph,[-10,22]),'≈ 11π/12','lbm','middle');
+  $('#f-rect').innerHTML=svg(650,232,b);
+}
+function cornerFig(){
+  var o=[330,860], R=760, r=64, t=-0.33, dl=0.2, a=[], b='';
+  for(var i=0;i<14;i++){ a.push([o[0]+R*Math.sin(t),o[1]-R*Math.cos(t)]); t+=dl; dl/=2; }
+  var tinf=-0.33+0.4, ainf=[o[0]+R*Math.sin(tinf),o[1]-R*Math.cos(tinf)], tg=[Math.cos(tinf),Math.sin(tinf)];
+  var aend=add(ainf,mul(tg,34)), v=[];
+  v.push(add(a[0],mul(unit(sub(a[0],a[1])),r)));
+  for(i=1;i<8;i++){ var u=unit(add(unit(sub(a[i-1],a[i])),unit(sub(a[i+1],a[i])))); v.push(add(a[i],mul(u,-r))); }
+  var vinf=add(ainf,mul(unit(sub(ainf,o)),r)), vend=add(ainf,mul(tg,r));
+  b+='<path class="dsh" d="M'+f(a[0][0]-30)+' '+f(a[0][1]+12)+' A'+R+' '+R+' 0 0 1 '+f(ainf[0]+90)+' '+f(ainf[1]+9)+'"/>';
+  b+=pl(a.concat([ainf,aend]),'S');
+  for(i=0;i<8;i++){ b+=(i<5?ci(v[i],r,'dsh'):'')+ci(v[i],3.5,'pt')+ci(a[i],3.2,'pe'); if(i<3){ b+=tx(add(v[i],[i==0?-4:6,i==0?18:-7]),'v'+'₁₂₃'[i],'lbm')+tx(add(a[i],[-2,18]),'a'+'₁₂₃'[i],'lbn','middle'); } }
+  b+=ci(vinf,3.5,'pt')+ci(vend,3.5,'pt')+ci(ainf,3.2,'pe')+ci(aend,3.2,'pe')+tx(add(vinf,[10,-8]),'v∞','lbm')+tx(add(vend,[6,16]),'v∞₊₁','lbm')+tx(add(ainf,[6,30]),'a∞','lbn','middle')+tx([40,150],'Σ','lbn');
+  $('#f-corner').innerHTML=svg(660,200,b);
+}
+function c11Fig(){
+  var d='M38 96 C90 20 130 150 178 86 S236 40 262 78', r=24;
+  var b='<path class="M" style="stroke-width:'+(2*r+4)+'" d="'+d+'"/><path class="pp" stroke-width="'+2*r+'" d="'+d+'"/><path class="nb" stroke-width="'+2*r+'" d="'+d+'"/><path class="S" d="'+d+'"/>'
+    +tx([150,150],'M','lb')+tx([196,78],'Σ','lbn');
+  $('#f-c11').innerHTML=svg(300,165,b);
+}
+
+/* ---------- routing, TOC, search ---------- */
+var views=$$('.view'), names=views.map(function(v){return v.id.slice(2)});
+function show(){
+  var h=location.hash.replace('#',''); if(names.indexOf(h)<0) h='main';
+  views.forEach(function(v){v.classList.toggle('on',v.id==='v-'+h)});
+  $$('#nav a').forEach(function(a){ if(a.getAttribute('href')==='#'+h) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  var cur=$('#v-'+h); document.title=cur.dataset.title+' — Steiner wiki';
+  var act=$('#nav a[aria-current]'); if(act&&act.scrollIntoView&&window.innerWidth<=860) act.scrollIntoView({block:'nearest',inline:'center'});
+}
+function goto(el){
+  var v=el.closest('.view'), n=v.id.slice(2);
+  if(location.hash!=='#'+n){ location.hash='#'+n; }
+  show(); setTimeout(function(){ el.scrollIntoView({block:'start'}); el.classList.add('flash'); },30);
+}
+views.forEach(function(v){
+  var hs=$$('h2',v); if(hs.length<3||v.id==='v-main') return;
+  var t=document.createElement('div'); t.className='toc'; t.innerHTML='<b>Contents</b>'; var ol=document.createElement('ol');
+  hs.forEach(function(h){ var li=document.createElement('li'), bt=document.createElement('button'); bt.type='button'; bt.textContent=h.textContent; bt.addEventListener('click',function(){h.scrollIntoView({block:'start'})}); li.appendChild(bt); ol.appendChild(li); });
+  t.appendChild(ol); var anchor=hs[0]; anchor.parentNode.insertBefore(t,anchor);
+});
+// index of C&T results
+var idx=$('#idx');
+$$('.res.ct').forEach(function(r){
+  var li=document.createElement('li'), bt=document.createElement('button'); bt.type='button'; bt.style.cssText='font:inherit;background:none;border:0;padding:0;color:var(--net);cursor:pointer;text-align:left';
+  var hd=$('.h',r), nm=$('b',hd).textContent, rest=hd.textContent.replace(nm,'').replace(/arXiv:\S+/,'').trim();
+  bt.textContent=nm; bt.addEventListener('click',function(){goto(r)});
+  li.appendChild(bt); var sm=document.createElement('span'); sm.style.cssText='font-family:var(--sans);font-size:.84rem;color:var(--mute)'; sm.textContent=' '+rest+' — '+r.closest('.view').dataset.title; li.appendChild(sm); idx.appendChild(li);
+});
+// search
+var q=$('#q'), hits=$('#hits'), pool=$$('.res').map(function(r){return {el:r,t:r.textContent.toLowerCase(),name:$('.h',r).textContent.trim(),art:r.closest('.view').dataset.title}});
+q.addEventListener('input',function(){
+  var s=q.value.trim().toLowerCase(); hits.innerHTML='';
+  if(s.length<2){hits.classList.remove('on');return}
+  var m=pool.filter(function(p){return p.t.indexOf(s)>=0}).slice(0,30);
+  if(!m.length){ hits.innerHTML='<button type="button" disabled>Nothing found. Try another word.</button>'; }
+  m.forEach(function(p){ var b=document.createElement('button'); b.type='button'; b.textContent=p.name; var sm=document.createElement('small'); sm.textContent=p.art; b.appendChild(sm);
+    b.addEventListener('click',function(){hits.classList.remove('on'); q.value=''; goto(p.el)}); hits.appendChild(b); });
+  hits.classList.add('on');
+});
+document.addEventListener('click',function(e){ if(!e.target.closest('.search')) hits.classList.remove('on') });
+q.addEventListener('keydown',function(e){ if(e.key==='Escape'){hits.classList.remove('on'); q.blur()} });
+$('#only').addEventListener('change',function(e){document.body.classList.toggle('onlyct',e.target.checked)});
+window.addEventListener('hashchange',function(){show(); window.scrollTo(0,0)});
+
+[triFig,function(){horseshoe('#f-hs0','#hs0','#hs0-out',360,270,112)},function(){horseshoe('#f-hs','#hs','#hs-out',560,330,140)},localFig,function(){squareFig('#f-square')},function(){squareFig('#f-square2')},clawFig,binFig,angleFig,ballFig,cocircFig,gilFig,mdm3Fig,enFig,typesFig,stadFig,rectFig,cornerFig,c11Fig]
+ .forEach(function(fn){ try{fn()}catch(err){ if(window.console) console.error(err) } });
+show();
+})();
+</script>
+</body>
+</html>
